@@ -491,8 +491,8 @@ select.proto-btn{padding:5px 10px;}
             </svg>
           </div>
           <div style="position:absolute;top:12px;right:14px;display:flex;gap:10px;z-index:5;">
-            <div style="background:rgba(255,255,255,.94);border-radius:10px;padding:9px 16px;font-size:13px;color:var(--text-2);box-shadow:var(--shadow-sm);">已探索面积&nbsp;<b style="color:var(--text-1);">约 <span id="areaNum2">86.0</span> m²</b></div>
-            <div style="background:rgba(255,255,255,.94);border-radius:10px;padding:9px 16px;font-size:13px;color:var(--text-2);box-shadow:var(--shadow-sm);">探索时长&nbsp;<b style="color:var(--text-1);" id="durNum">12 分 36 秒</b></div>
+            <div style="background:rgba(255,255,255,.94);border-radius:10px;padding:9px 16px;font-size:13px;color:var(--text-2);box-shadow:var(--shadow-sm);">已建图面积&nbsp;<b style="color:var(--text-1);">约 <span id="areaNum2">86.0</span> m²</b></div>
+            <div style="background:rgba(255,255,255,.94);border-radius:10px;padding:9px 16px;font-size:13px;color:var(--text-2);box-shadow:var(--shadow-sm);">建图时长&nbsp;<b style="color:var(--text-1);" id="durNum">12 分 36 秒</b></div>
           </div>
         </div>
       </div>
@@ -501,7 +501,7 @@ select.proto-btn{padding:5px 10px;}
       <div class="exp-right">
         <div class="exp-dot" id="expDot"></div>
         <div class="exp-title" id="expTitle">自主建图中</div>
-        <div class="exp-sub">已探索面积 约 <b id="areaNum">86.0</b> m²</div>
+        <div class="exp-sub">已建图面积 约 <b id="areaNum">86.0</b> m²</div>
         <button class="exp-circle" id="expCircle" title="暂停 / 继续" onclick="exploreToggle()"><svg viewBox="0 0 56 56"><rect x="13" y="10" width="11" height="36" rx="3" fill="#fff"/><rect x="32" y="10" width="11" height="36" rx="3" fill="#fff"/></svg></button>
         <button class="exp-end" id="expEnd" style="visibility:hidden;" onclick="openDialog('d-exit')">⏹ 结束建图</button>
       </div>
@@ -811,7 +811,7 @@ select.proto-btn{padding:5px 10px;}
       <tr><td>5</td><td>P04 现场准备提示</td><td>阅读三项准备 + 初始点设定说明，点「开始识别」</td><td>进入 P05 初始点识别</td><td>F03 前置说明</td></tr>
       <tr><td>6</td><td>P05 初始点识别</td><td>状态预览切「识别失败」→ 弹窗「重新识别」</td><td>失败提示重新摆放原地等待；切「识别成功」→ 出现「开始建图」按钮，手动点击后进入自动建图</td><td>F03 初始点</td></tr>
       <tr><td>7</td><td>P06 自主探索</td><td>观察双栏页面（评审后新样式）</td><td>左侧「显示地图」面板实时生长（清洁轨迹动画），右侧「自主建图中」+ 大暂停圆钮</td><td>F04 探索</td></tr>
-      <tr><td>8</td><td>P06 自主探索</td><td>点右侧大圆钮暂停 → 再点恢复；切「暂停·已移动」观察顶部提示</td><td>「已暂停」（圆钮变播放、出现「结束建图」）→ 无移动时直接恢复；有移动（越界）时暂停页顶部提示「已越过禁行线，请推回可运行区域」，点继续弹「请确保您在机器人可运行区域内」确认弹窗；地图右上角展示「已探索面积（约XXm²）」「探索时长」</td><td>F04 暂停/恢复</td></tr>
+      <tr><td>8</td><td>P06 自主探索</td><td>点右侧大圆钮暂停 → 再点恢复；切「暂停·已移动」观察顶部提示</td><td>「已暂停」（圆钮变播放、出现「结束建图」）→ 无移动时直接恢复；有移动（越界）时暂停页顶部提示「已越过禁行线，请推回可运行区域」，点继续弹「请确保您在机器人可运行区域内」确认弹窗；地图右上角展示「已建图面积（约XXm²）」「建图时长」</td><td>F04 暂停/恢复</td></tr>
       <tr><td>9</td><td>P06 自主探索</td><td>暂停 →「结束建图」→ 选「直接编辑地图」</td><td>原地进入 P08 自动优化并保存（主动结束分支）</td><td>F04 主动结束</td></tr>
       <tr><td>10</td><td>P06 自主探索</td><td>暂停 →「结束建图」→ 选「返航至初始点」</td><td>进入 P07 返航中（与探索页同款双栏样式），路径动画回初始点</td><td>F04 返航</td></tr>
       <tr><td>11</td><td>P07→P08→P09</td><td>返航到达 → 观察自动流转</td><td>「地图优化中」→「自动建图已完成」保存成功页</td><td>F04/F06</td></tr>
