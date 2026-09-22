@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自动建图 · 高保真原型 v1.0（2026-09-21）</title>
+<style>
+:root{
+  --bg-page:#eef1f5; --bg-device:#d6d9de; --bg-card:#ffffff;
+  --primary:#1677ff; --primary-hover:#0e5fd8; --primary-light:#e8f1ff;
+  --success:#16a34a; --success-light:#e8f7ee;
+  --danger:#e5484d; --danger-light:#fdecec;
+  --warn:#f59e0b; --warn-light:#fff6e6;
+  --text-1:#1a1a1a; --text-2:#555; --text-3:#8a8a8a;
+  --radius:10px; --radius-sm:6px;
+  --shadow-sm:0 2px 4px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
+  --shadow-md:0 4px 12px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.05);
+  --shadow-lg:0 12px 28px rgba(15,23,42,.14),0 4px 8px rgba(15,23,42,.06);
+  --transition:.25s cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{font-family:-apple-system,"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;background:var(--bg-page);color:var(--text-1);overflow:hidden;}
+
+/* ===== 原型工作台顶栏 ===== */
+.proto-topbar{position:fixed;top:0;left:0;right:0;height:52px;background:#fff;border-bottom:1px solid #e2e6ec;display:flex;align-items:center;gap:14px;padding:0 20px;z-index:1000;box-shadow:var(--shadow-sm);}
+.proto-topbar .logo{font-weight:700;font-size:15px;}
+.proto-topbar .tag{font-size:12px;color:var(--primary);background:var(--primary-light);border-radius:999px;padding:2px 10px;}
+.proto-topbar .spacer{flex:1;}
+.proto-btn{border:1px solid #d5dae2;background:#fff;color:var(--text-1);border-radius:var(--radius-sm);padding:6px 14px;font-size:13px;cursor:pointer;transition:var(--transition);}
+.proto-btn:hover{background:var(--primary-light);border-color:var(--primary);color:var(--primary);}
+.proto-btn.primary{background:var(--primary);border-color:var(--primary);color:#fff;}
+.proto-btn.primary:hover{background:var(--primary-hover);}
+select.proto-btn{padding:5px 10px;}
+
+/* ===== 设备画布 ===== */
+.device-stage{position:fixed;top:52px;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;}
+.device-frame{width:1280px;height:800px;flex:none;background:#111;border-radius:18px;padding:10px;box-shadow:var(--shadow-lg);transform-origin:center center;}
+.device-screen{width:1260px;height:780px;background:var(--bg-device);border-radius:10px;overflow:hidden;position:relative;}
+
+/* 状态栏 */
+.statusbar{position:absolute;top:0;left:0;right:0;height:36px;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 16px;font-size:14px;color:var(--text-1);z-index:5;}
+.statusbar .batt{width:26px;height:12px;border:1.5px solid #333;border-radius:3px;position:relative;}
+.statusbar .batt::after{content:"";position:absolute;right:-4px;top:3px;width:2px;height:5px;background:#333;border-radius:1px;}
+.statusbar .batt i{position:absolute;left:1px;top:1px;bottom:1px;width:88%;background:#22c55e;border-radius:1px;display:block;}
+
+/* 页面 */
+.page{position:absolute;inset:0;display:none;background:var(--bg-device);}
+.page.active{display:block;animation:pagein .3s ease;}
+@keyframes pagein{from{opacity:0;transform:translateX(14px);}to{opacity:1;transform:none;}}
+
+/* 通用组件 */
+.navrow{display:flex;align-items:center;gap:10px;padding:44px 20px 8px;position:relative;z-index:4;}
+.backbtn{width:34px;height:34px;border-radius:50%;background:#fff;border:none;box-shadow:var(--shadow-sm);cursor:pointer;font-size:16px;color:var(--text-1);display:flex;align-items:center;justify-content:center;transition:var(--transition);}
+.backbtn:hover{box-shadow:var(--shadow-md);transform:translateX(-2px);}
+.page-title{font-size:20px;font-weight:600;}
+.hint{font-size:12.5px;color:var(--text-3);}
+.card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);}
+.btn{border:none;border-radius:var(--radius-sm);font-size:16px;cursor:pointer;padding:12px 36px;transition:var(--transition);font-weight:500;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-hover);box-shadow:var(--shadow-md);}
+.btn-primary:disabled{background:#b9c2cf;color:#f0f2f5;cursor:not-allowed;box-shadow:none;}
+.btn-plain{background:#fff;color:var(--primary);border:1px solid var(--primary);}
+.btn-plain:hover{background:var(--primary-light);}
+.btn-green{background:#22c55e;color:#fff;}
+.btn-green:hover{background:#16a34a;}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-sm{font-size:13px;padding:6px 14px;}
+
+/* 状态条 banner */
+.banner{position:absolute;top:44px;left:50%;transform:translateX(-50%);z-index:6;background:#fff;border:1.5px solid var(--danger);color:var(--danger);border-radius:8px;padding:9px 22px;font-size:16px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-md);}
+.banner::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--danger);animation:blink 1.2s infinite;}
+.banner.blue{border-color:var(--primary);color:var(--primary);}
+.banner.blue::before{background:var(--primary);}
+.banner.gray{border-color:#9aa3af;color:#4b5563;background:#f3f4f6;}
+.banner.gray::before{background:#9aa3af;animation:none;}
+.banner.orange{border-color:var(--warn);color:#b45309;background:var(--warn-light);}
+.banner.orange::before{background:var(--warn);animation:none;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+/* 底部深色托盘 */
+.tray{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);background:rgba(38,42,48,.92);border-radius:12px;padding:12px 16px;display:flex;gap:14px;z-index:6;box-shadow:var(--shadow-lg);}
+.tray .btn{min-width:150px;}
+
+/* 地图 */
+.map-canvas{position:absolute;inset:36px 0 0 0;}
+.map-canvas svg{width:100%;height:100%;}
+.seg{opacity:0;transform:scale(.55);transform-origin:320px 240px;transition:opacity .9s ease,transform .9s ease;}
+.playing .seg{opacity:1;transform:scale(1);}
+.playing .seg:nth-of-type(1){transition-delay:.1s}.playing .seg:nth-of-type(2){transition-delay:.5s}
+.playing .seg:nth-of-type(3){transition-delay:.9s}.playing .seg:nth-of-type(4){transition-delay:1.3s}
+.playing .seg:nth-of-type(5){transition-delay:1.7s}.playing .seg:nth-of-type(6){transition-delay:2.1s}
+.playing .seg:nth-of-type(7){transition-delay:2.5s}.playing .seg:nth-of-type(8){transition-delay:2.9s}
+.playing .seg:nth-of-type(9){transition-delay:3.3s}.playing .seg:nth-of-type(10){transition-delay:3.7s}
+.route-line{stroke-dasharray:900;stroke-dashoffset:900;}
+.playing .route-line{animation:dash 4s linear forwards;}
+@keyframes dash{to{stroke-dashoffset:0;}}
+
+/* 开始助力浮钮 */
+.assist{position:absolute;left:36px;bottom:120px;width:96px;height:96px;border-radius:50%;background:var(--primary);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:15px;box-shadow:0 8px 20px rgba(22,119,255,.4);z-index:5;border:6px solid rgba(60,64,70,.55);}
+.assist svg{margin-bottom:2px;}
+.assist.small{position:absolute;}
+
+/* 状态切换器（仅原型演示） */
+.state-switcher{position:absolute;top:40px;right:16px;z-index:30;background:rgba(255,255,255,.95);border:1px dashed var(--primary);border-radius:8px;padding:6px 10px;display:flex;gap:6px;align-items:center;box-shadow:var(--shadow-md);}
+.state-switcher .lab{font-size:11px;color:var(--primary);font-weight:600;}
+.state-btn{border:1px solid #d5dae2;background:#fff;border-radius:999px;font-size:12px;padding:3px 10px;cursor:pointer;color:var(--text-2);transition:var(--transition);}
+.state-btn.active,.state-btn:hover{background:var(--primary);border-color:var(--primary);color:#fff;}
+
+/* 弹窗 */
+.dialog-mask{position:absolute;inset:0;background:rgba(0,0,0,.42);z-index:40;display:none;align-items:center;justify-content:center;}
+.dialog-mask.open{display:flex;}
+.dialog{background:#fff;border-radius:14px;box-shadow:var(--shadow-lg);width:560px;max-width:92%;padding:26px 30px 24px;position:relative;animation:pop .22s ease;}
+@keyframes pop{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:none;}}
+.dialog h3{text-align:center;font-size:19px;margin-bottom:16px;}
+.dialog.danger h3{color:var(--danger);}
+.dialog.warn h3{color:var(--warn);}
+.dialog .d-body{font-size:15px;color:var(--text-2);line-height:1.75;}
+.dialog .d-btns{display:flex;gap:14px;margin-top:22px;justify-content:center;}
+.dialog .d-btns .btn{min-width:130px;padding:11px 20px;font-size:15px;}
+.d-close{position:absolute;top:12px;right:16px;border:none;background:none;font-size:20px;color:#9aa3af;cursor:pointer;}
+.d-close:hover{color:var(--text-1);}
+
+/* 检查项 */
+.check-item{display:flex;align-items:center;gap:16px;padding:18px 22px;}
+.check-item+.check-item{border-top:1px solid #f0f2f5;}
+.check-ico{width:40px;height:40px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:19px;background:#f1f5f9;color:var(--text-3);}
+.check-item.ok .check-ico{background:var(--success-light);color:var(--success);}
+.check-item.ok .check-ico::after{content:"✓";font-weight:700;}
+.check-item.ok .check-ico{font-size:0;}
+.check-item.warn .check-ico{background:var(--warn-light);color:#b45309;font-size:0;}
+.check-item.warn .check-ico::after{content:"!";font-size:19px;font-weight:700;}
+.check-item.warn .check-state{color:#b45309;}
+.check-item.fail .check-ico{background:var(--danger-light);color:var(--danger);font-size:0;}
+.check-item.fail .check-ico::after{content:"✕";font-size:19px;font-weight:700;}
+.check-main{flex:1;}
+.check-name{font-size:16px;font-weight:600;}
+.check-desc{font-size:13px;color:var(--text-3);margin-top:2px;}
+.check-state{font-size:13px;color:var(--text-3);min-width:70px;text-align:right;}
+.check-item.ok .check-state{color:var(--success);}
+.check-item.fail .check-state{color:var(--danger);}
+.spin{width:18px;height:18px;border:2.5px solid #d8dee8;border-top-color:var(--primary);border-radius:50%;animation:rot .8s linear infinite;display:inline-block;vertical-align:-4px;}
+@keyframes rot{to{transform:rotate(360deg);}}
+
+/* toast */
+.toast{position:absolute;top:52%;left:50%;transform:translate(-50%,-50%);background:rgba(30,34,40,.92);color:#fff;border-radius:10px;padding:14px 26px;font-size:15px;z-index:60;opacity:0;pointer-events:none;transition:opacity .3s;max-width:70%;text-align:center;line-height:1.6;}
+.toast.show{opacity:1;}
+
+/* 异常面板 */
+.ab-table{width:calc(100% - 48px);margin:6px 24px;border-collapse:collapse;background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);}
+.ab-table th{background:#f1f5f9;font-size:13px;color:var(--text-2);padding:10px 12px;text-align:left;font-weight:600;}
+.ab-table td{padding:11px 12px;font-size:13.5px;border-top:1px solid #f0f2f5;color:var(--text-1);vertical-align:top;line-height:1.55;}
+.ab-badge{display:inline-block;font-size:11px;border-radius:4px;padding:1px 7px;margin-right:6px;background:var(--primary-light);color:var(--primary);font-weight:600;}
+.ab-badge.b{background:var(--danger-light);color:var(--danger);}
+.link-btn{border:none;background:none;color:var(--primary);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:4px;}
+.link-btn:hover{background:var(--primary-light);}
+
+/* 设置开关 */
+.switch{width:52px;height:30px;border-radius:999px;background:#c9d1dc;position:relative;cursor:pointer;transition:var(--transition);flex:none;}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:var(--shadow-sm);transition:var(--transition);}
+.switch.on{background:var(--primary);}
+.switch.on::after{left:25px;}
+
+/* 进度条 */
+.pbar{height:8px;background:#e3e7ee;border-radius:999px;overflow:hidden;flex:1;}
+.pbar i{display:block;height:100%;background:var(--primary);border-radius:999px;transition:width .5s ease;}
+
+/* 走查面板 */
+.walkthrough-btn{position:fixed;right:18px;top:64px;z-index:2000;background:var(--primary);color:#fff;border:none;border-radius:999px;padding:9px 18px;font-size:13px;cursor:pointer;box-shadow:var(--shadow-md);transition:var(--transition);}
+.walkthrough-btn:hover{background:var(--primary-hover);}
+.walkthrough-panel{position:fixed;top:104px;right:18px;width:760px;max-height:calc(100vh - 130px);overflow:auto;background:#fff;border-radius:14px;box-shadow:var(--shadow-lg);z-index:2000;display:none;padding:20px 24px;}
+.walkthrough-panel.open{display:block;animation:pop .2s ease;}
+.walkthrough-panel h3{font-size:16px;margin-bottom:4px;}
+.walkthrough-panel .meta{font-size:12.5px;color:var(--text-3);margin-bottom:12px;}
+.walkthrough-panel table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.walkthrough-panel th{background:#f1f5f9;padding:7px 9px;text-align:left;font-weight:600;color:var(--text-2);}
+.walkthrough-panel td{padding:7px 9px;border-top:1px solid #f0f2f5;line-height:1.5;}
+.walkthrough-panel h4{margin:18px 0 8px;font-size:14px;color:var(--primary);}
+.wt-close{float:right;cursor:pointer;color:#9aa3af;font-size:18px;}
+.wt-close:hover{color:var(--text-1);}
+
+/* 探索/返航 双栏布局（2026-09-21 评审后样式：左地图面板 + 右状态面板） */
+.exp-layout{position:absolute;top:36px;bottom:0;left:0;right:0;display:flex;gap:12px;padding:12px 14px 14px;}
+.exp-left{width:57%;background:#fff;border-radius:12px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.exp-tabs{display:flex;background:#eceef1;flex:none;}
+.exp-tab{flex:1;text-align:center;padding:13px 0;font-size:17px;font-weight:600;color:#5b6470;cursor:pointer;transition:var(--transition);user-select:none;}
+.exp-tab.active{background:#fff;color:var(--text-1);border-radius:10px 10px 0 0;}
+.exp-maparea{flex:1;background:#e3e6ea;position:relative;margin:10px;border-radius:6px;overflow:hidden;}
+.exp-maparea svg{width:100%;height:100%;}
+.exp-legend{position:absolute;left:12px;bottom:12px;background:#fff;border-radius:8px;padding:7px 14px;font-size:13.5px;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-sm);}
+.exp-legend i{width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;}
+.exp-right{flex:1;background:#fff;border-radius:12px;box-shadow:var(--shadow-sm);position:relative;display:flex;flex-direction:column;align-items:center;}
+.exp-dot{position:absolute;top:24px;left:28px;width:12px;height:12px;border-radius:50%;background:#22c55e;}
+.exp-dot.paused{background:#f59e0b;}
+.exp-title{font-size:42px;font-weight:800;margin-top:58px;letter-spacing:2px;}
+.exp-sub{margin-top:12px;font-size:14.5px;color:var(--text-2);}
+.exp-circle{width:172px;height:172px;border-radius:50%;background:var(--primary);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px rgba(22,119,255,.42);margin-top:40px;transition:var(--transition);}
+.exp-circle:hover{background:var(--primary-hover);transform:scale(1.03);}
+.exp-circle svg{width:58px;height:58px;}
+.exp-end{margin-top:28px;border:none;background:none;color:var(--danger);font-size:15.5px;cursor:pointer;padding:8px 18px;border-radius:8px;font-weight:600;}
+.exp-end:hover{background:var(--danger-light);}
+
+/* 建图时间胶囊 */
+.bt-pill{border:1.5px solid #d6dae0;border-radius:22px;padding:9px 24px;font-size:14px;color:var(--text-2);cursor:pointer;user-select:none;background:#fff;}
+.bt-pill:hover{border-color:var(--primary);color:var(--primary);}
+.bt-pill.bt-on{border-color:var(--primary);color:var(--primary);background:rgba(22,119,255,0.07);font-weight:600;}
+/* 列表卡片 */
+.map-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:8px 24px;}
+.map-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;transition:var(--transition);}
+.map-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.map-thumb{height:150px;background:#c2c6cc;display:flex;align-items:center;justify-content:center;position:relative;}
+.map-name{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;font-size:16px;}
+.map-ops{display:flex;justify-content:flex-end;gap:10px;padding:8px 14px 14px;}
+.edit-chip{background:var(--success-light);color:var(--success);border-radius:8px;padding:8px 26px;cursor:pointer;font-size:15px;}
+.new-chip{background:var(--warn-light);color:#b45309;font-size:11px;border-radius:4px;padding:1px 7px;font-weight:600;}
+.using{color:var(--primary);font-size:13px;}
+</style>
+</head>
+<body>
+
+<!-- ===== 原型工作台顶栏 ===== -->
+<div class="proto-topbar">
+  <span class="logo">自动建图 · 高保真原型</span>
+  <span class="tag">V2 通用版 PRD 对应 · CC1 本体屏 1280×800</span>
+  <span class="spacer"></span>
+  <select class="proto-btn" id="quickNav" onchange="showPage(this.value)">
+    <option value="">— 页面直达（演示用）—</option>
+    <option value="p-settings">P00 高级设置 · 功能配置</option>
+    <option value="p-maplist">P01 建图工具 · 地图列表</option>
+    <option value="p-mode">P02 选择建图方式</option>
+    <option value="p-check">P03 启动前检查</option>
+    <option value="p-prepare">P04 现场准备提示</option>
+    <option value="p-anchor">P05 初始点识别</option>
+    <option value="p-explore">P06 自主建图</option>
+    <option value="p-return">P07 返航中</option>
+    <option value="p-optimize">P08 地图优化中</option>
+    <option value="p-saved">P09 保存成功</option>
+    <option value="p-abnormal">P10 异常闭环演示面板</option>
+  </select>
+  <button class="proto-btn primary" onclick="toggleWalkthrough()">🎬 走查脚本</button>
+</div>
+<button class="walkthrough-btn" style="display:none"></button>
+
+<div class="device-stage">
+<div class="device-frame" id="deviceFrame">
+<div class="device-screen" id="screen">
+
+  <div class="statusbar"><span id="clock">10:59</span><span>📶</span><span>🔌</span><span class="batt"><i></i></span><span>96%</span></div>
+
+  <!-- ==================== Page: P00 高级设置·功能配置（F01 功能配置） ==================== -->
+  <div class="page" id="p-settings">
+    <div class="navrow"><button class="backbtn" onclick="showPage('p-maplist')">‹</button><span class="page-title">高级设置 · 功能配置</span></div>
+    <div class="card" style="width:900px;margin:10px auto 0;">
+      <div class="check-item">
+        <div class="check-ico">🧭</div>
+        <div class="check-main">
+          <div class="check-name">自动建图</div>
+          <div class="check-desc">开启后，建图工具内提供「自动建图」方式；机器人可自主探索完成建图</div>
+        </div>
+        <div class="switch on" id="swExplore" onclick="toggleSwitch(this)"></div>
+      </div>
+      <div class="check-item" style="display:block;">
+        <div class="check-name" style="font-size:14px;color:var(--text-2);margin-bottom:8px;">机型默认状态</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13.5px;">
+          <tr><td style="padding:7px 12px;border-top:1px solid #f0f2f5;">CC1 系列</td><td style="border-top:1px solid #f0f2f5;color:var(--success);">默认开启（v2.19.3 优先合入）</td></tr>
+        </table>
+        <div class="hint" style="margin-top:10px;font-size:12.5px;">其他机型暂不合入该功能，不提供对应配置项</div>
+      </div>
+    </div>
+    <p class="hint" style="text-align:center;margin-top:14px;">关闭开关后，P02 页不展示「自动建图」选项（演示原型中始终可见）</p>
+  </div>
+
+  <!-- ==================== Page: P01 建图工具·地图列表（F02 功能入口） ==================== -->
+  <div class="page active" id="p-maplist">
+    <div class="navrow" style="padding-top:48px;">
+      <button class="backbtn" onclick="showToast('返回本体桌面（不在本需求范围）')">‹</button>
+      <span class="page-title">地图列表</span>
+      <span class="spacer" style="flex:1"></span>
+      <button class="btn btn-plain btn-sm" style="position:relative;" onclick="showToast('同步：将本地地图上传云端（原型不展开）')">同步<span style="position:absolute;top:-4px;right:-4px;width:9px;height:9px;background:var(--danger);border-radius:50%;"></span></button>
+      <button class="btn btn-primary btn-sm" style="font-size:15px;padding:8px 26px;" onclick="showPage('p-mode')">新建</button>
+    </div>
+    <div class="map-grid" id="mapGrid">
+      <div class="map-card">
+        <div class="map-thumb"><svg viewBox="0 0 200 120"><path d="M100 60 L60 20 M100 60 L150 30 M100 60 L90 110 M100 60 L40 80" stroke="#fff" stroke-width="7" fill="none"/></svg></div>
+        <div class="map-name"><span>4#0#米越工位</span><span class="using">使用中</span></div>
+        <div class="map-ops"><span class="edit-chip" onclick="showToast('进入地图编辑（现有功能，原型不展开）')">✎</span><span class="edit-chip" style="background:#eef1f5;color:var(--text-2);padding:8px 14px;" onclick="showToast('重命名 / 删除 / 上传云端')">…</span></div>
+      </div>
+      <div class="map-card">
+        <div class="map-thumb"><svg viewBox="0 0 200 120"><path d="M40 20 H160 M60 20 V100 M60 60 H120 M120 60 V100" stroke="#fff" stroke-width="7" fill="none"/></svg></div>
+        <div class="map-name"><span>-3#8#vpr0821</span><span></span></div>
+        <div class="map-ops"><span class="edit-chip" onclick="showToast('进入地图编辑（现有功能，原型不展开）')">✎</span><span class="edit-chip" style="background:#eef1f5;color:var(--text-2);padding:8px 14px;" onclick="showToast('重命名 / 删除 / 上传云端')">…</span></div>
+      </div>
+    </div>
+    <div class="assist" onclick="showToast('开始助力：手推辅助移动（现有功能）')"><svg width="22" height="14" viewBox="0 0 22 14"><path d="M2 12 L11 3 L20 12" stroke="#fff" stroke-width="3" fill="none"/></svg>开始助力</div>
+    <div style="position:absolute;left:24px;bottom:24px;width:40px;height:40px;background:#fff;border-radius:10px;box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;" onclick="showPage('p-settings')">⚙</div>
+  </div>
+
+  <!-- ==================== Page: P02 选择建图方式（F02 功能入口·新增自动建图） ==================== -->
+  <div class="page" id="p-mode" style="overflow-y:auto;">
+    <div class="navrow"><button class="backbtn" onclick="showPage('p-maplist')">‹</button><span class="page-title" style="flex:1;text-align:center;margin-right:44px;">选择建图方式</span></div>
+    <div style="width:760px;margin:60px auto 0;display:flex;flex-direction:column;gap:20px;">
+      <!-- 现有方式：手推建图（原「快速建图」改名） -->
+      <div class="card" style="padding:22px 28px;cursor:pointer;display:flex;align-items:center;gap:18px;" onclick="showToast('手推建图：走现有手推建图流程（不在本需求范围）')">
+        <div style="font-size:34px;">🚶</div>
+        <div style="flex:1;">
+          <div style="font-size:19px;font-weight:600;">手推建图</div>
+          <div class="hint" style="margin-top:4px;font-size:13.5px;">人工推行机器人扫描建图（现有方式）</div>
+        </div>
+        <span style="color:var(--text-3);font-size:20px;">›</span>
+      </div>
+      <!-- F02: 自动建图入口（新增） -->
+      <div class="card" id="cardAuto" style="padding:22px 28px;border:2px solid #e5e7eb;cursor:pointer;display:flex;align-items:center;gap:18px;" onclick="selectAuto()">
+        <div style="font-size:34px;">🤖</div>
+        <div style="flex:1;">
+          <div style="font-size:19px;font-weight:700;">自动建图 <span class="new-chip">NEW</span></div>
+          <div class="hint" style="margin-top:4px;font-size:13.5px;">机器人自主探索完成环境扫描与建图，无需人工推行；完成后自动返回初始点<br><span style="color:#b45309;">⚠ 请注意：泳池、电梯等易跌落区，需贴完禁入区特征码后，再启动自动建图。</span></div>
+        </div>
+        <span style="color:var(--text-3);font-size:20px;">›</span>
+      </div>
+      <!-- 地图类型（融合自真机「选择建图方式」页，两种建图方式通用） -->
+      <div style="margin-top:14px;">
+        <div class="hint" style="font-size:13px;margin-bottom:10px;text-align:left;">地图类型 <span style="color:var(--text-3);">· 自动建图 / 手推建图 通用</span></div>
+        <div class="card" style="padding:20px 28px;">
+          <div onclick="showToast('当前机型仅支持「激光 + 3D VSLAM + Marker」，后续机型扩展后此处可选')" style="border:2px solid var(--primary);background:rgba(22,119,255,0.06);border-radius:12px;padding:14px 22px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;">
+            <span style="font-size:16.5px;font-weight:600;color:var(--primary);">激光 + 3D VSLAM + Marker</span>
+            <span style="color:var(--primary);font-size:15px;">✓</span>
+          </div>
+          <div class="hint" style="margin-top:10px;font-size:12.5px;text-align:center;">激光雷达 + 3D 视觉 SLAM + 定位码 Marker 融合定位建图；如后续新增地图类型，将在此页扩展选择</div>
+        </div>
+      </div>
+      <!-- 建图时间：选中自动建图后显示；达到所选时长后自动结束探索并返回初始点 -->
+      <div id="buildTimeBlock" style="display:none;margin-top:14px;">
+        <div class="hint" style="font-size:13px;margin-bottom:10px;text-align:left;">建图时间 <span style="color:var(--text-3);">· 自动建图达到所选时长后，机器人自动返回初始点</span></div>
+        <div class="card" style="padding:20px 28px;">
+          <div id="buildTimeRow" style="display:flex;flex-wrap:wrap;gap:12px;">
+            <span class="bt-pill" onclick="setBt(this)">1 小时</span>
+            <span class="bt-pill" onclick="setBt(this)">2 小时</span>
+            <span class="bt-pill" onclick="setBt(this)">3 小时</span>
+            <span class="bt-pill" onclick="setBt(this)">4 小时</span>
+            <span class="bt-pill" onclick="setBt(this)">5 小时</span>
+            <span class="bt-pill" onclick="setBt(this)">8 小时</span>
+            <span class="bt-pill bt-on" onclick="setBt(this)">无限制</span>
+          </div>
+          <div class="hint" style="margin-top:12px;font-size:12.5px;">默认「无限制」；到达所选时间后自动结束探索、返回初始点并进入地图优化保存流程</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="autoNext" style="display:none;margin-top:6px;padding:14px 0;font-size:16px;" onclick="showPage('p-check')">开始自动建图 ›</button>
+    </div>
+    <p class="hint" style="text-align:center;margin-top:26px;">「边建图边清洁」走已有「基于快速演示的无图一键清洁」方案，不在本需求范围</p>
+  </div>
+
+  <!-- ==================== Page: P03 启动前检查（F03 启动校验） ==================== -->
+  <div class="page" id="p-check">
+    <div class="navrow"><button class="backbtn" onclick="showPage('p-mode')">‹</button><span class="page-title">启动前检查</span></div>
+    <div class="state-switcher">
+      <span class="lab">状态预览</span>
+      <button class="state-btn active" onclick="checkState('default',this)">校验中</button>
+      <button class="state-btn" onclick="checkState('dunwu',this)">勿扰拦截</button>
+      <button class="state-btn" onclick="checkState('lowbatt',this)">电量不足</button>
+    </div>
+    <div class="card" style="width:860px;margin:14px auto 0;" id="checkList">
+      <div class="check-item" data-check="batt">
+        <div class="check-ico">🔋</div>
+        <div class="check-main"><div class="check-name">电量</div><div class="check-desc">自动建图电量标准：≥ 80%</div></div>
+        <div class="check-state"><span class="spin"></span></div>
+      </div>
+      <div class="check-item" data-check="status">
+        <div class="check-ico">🟢</div>
+        <div class="check-main"><div class="check-name">机器人状态</div><div class="check-desc">空闲状态；处于勿扰模式时可手动选择是否继续</div></div>
+        <div class="check-state"><span class="spin"></span></div>
+      </div>
+      <div class="check-item" data-check="storage">
+        <div class="check-ico">💾</div>
+        <div class="check-main"><div class="check-name">存储空间</div><div class="check-desc">地图存储空间充足（预留 15%）</div></div>
+        <div class="check-state"><span class="spin"></span></div>
+      </div>
+      <div class="check-item" data-check="selftest">
+        <div class="check-ico">📡</div>
+        <div class="check-main"><div class="check-name">自检</div><div class="check-desc">导航与传感器自检通过</div></div>
+        <div class="check-state"><span class="spin"></span></div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:22px;">
+      <button class="btn btn-primary" id="checkGo" disabled onclick="showPage('p-prepare')">开始探索</button>
+    </div>
+    <p class="hint" style="text-align:center;margin-top:10px;">校验全部通过后「开始探索」可点击；不通过则停留在当前页并提示原因；勿扰状态可手动确认后继续</p>
+  </div>
+
+  <!-- ==================== Page: P04 现场准备提示（F03 前置说明） ==================== -->
+  <div class="page" id="p-prepare">
+    <div class="navrow"><button class="backbtn" onclick="showPage('p-check')">‹</button><span class="page-title">现场准备提示</span><span class="hint" style="margin-left:auto;">启动探索前，请确认以下事项</span></div>
+    <div style="display:flex;gap:20px;width:1080px;margin:26px auto 0;">
+      <div class="card" style="flex:1;padding:26px 22px;text-align:center;">
+        <div style="font-size:40px;">🚫</div>
+        <div style="font-weight:700;margin:10px 0 6px;">粘贴禁入特征码</div>
+        <p class="hint" style="line-height:1.7;">在楼梯、台阶、水池等危险边界粘贴禁入特征码，机器人将自动避让</p>
+      </div>
+      <div class="card" style="flex:1;padding:26px 22px;text-align:center;">
+        <div style="font-size:40px;">🧹</div>
+        <div style="font-weight:700;margin:10px 0 6px;">清理地面障碍物</div>
+        <p class="hint" style="line-height:1.7;">移除散落线缆、临时杂物等，保障自主探索路径畅通</p>
+      </div>
+      <div class="card" style="flex:1;padding:26px 22px;text-align:center;">
+        <div style="font-size:40px;">💡</div>
+        <div style="font-weight:700;margin:10px 0 6px;">保持环境光照充足</div>
+        <p class="hint" style="line-height:1.7;">昏暗环境会影响感知效果，请确保探索区域光照充足</p>
+      </div>
+    </div>
+    <div class="card" style="width:1080px;margin:22px auto 0;padding:18px 24px;display:flex;gap:14px;align-items:center;background:var(--warn-light);border:1px solid var(--warn);">
+      <span style="font-size:22px;">📍</span>
+      <div style="font-size:14.5px;line-height:1.7;color:#92400e;"><b>初始点设定：</b>请将机器人推至<b>充电桩、工作站或定位码附近</b>作为初始点——该点同时是建图完成后的<b>返航目标</b>。机器人将自动识别初始点。</div>
+    </div>
+    <div style="text-align:center;margin-top:26px;"><button class="btn btn-primary" style="min-width:220px;" onclick="showPage('p-anchor')">我已准备完毕，开始识别</button></div>
+  </div>
+
+  <!-- ==================== Page: P05 初始点识别（F03 初始点设定） ==================== -->
+  <div class="page" id="p-anchor">
+    <div class="navrow"><button class="backbtn" onclick="showPage('p-prepare')">‹</button><span class="page-title">识别初始点</span></div>
+    <div class="state-switcher">
+      <span class="lab">状态预览</span>
+      <button class="state-btn active" onclick="anchorState('scanning',this)">识别中</button>
+      <button class="state-btn" onclick="anchorState('fail',this)">识别失败</button>
+      <button class="state-btn" onclick="anchorState('ok',this)">识别成功</button>
+    </div>
+    <div class="map-canvas">
+      <svg viewBox="0 0 1260 744">
+        <g opacity=".85">
+          <path d="M420 320 L560 240 L780 260 L900 360 L880 520 L600 560 L440 480 Z" fill="#eef4ff" stroke="#9dbaff" stroke-width="2" stroke-dasharray="6 5"/>
+          <circle cx="640" cy="390" r="120" fill="none" stroke="#1677ff" stroke-width="2.5" stroke-dasharray="8 7" opacity=".7">
+            <animate attributeName="r" values="80;150;80" dur="2.4s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".8;.15;.8" dur="2.4s" repeatCount="indefinite"/>
+          </circle>
+        </g>
+        <g transform="translate(640,390)">
+          <path d="M0 -26 L18 16 L0 8 L-18 16 Z" fill="#1677ff"/>
+          <circle cx="0" cy="-26" r="34" fill="none" stroke="#1677ff" stroke-width="2" opacity=".45"/>
+        </g>
+      </svg>
+    </div>
+    <div class="banner blue" id="anchorScanBanner">正在识别初始点，请将机器人置于充电桩 / 工作站 / 定位码附近…</div>
+    <div class="card" id="anchorHintCard" style="position:absolute;bottom:110px;left:50%;transform:translateX(-50%);padding:14px 26px;font-size:14px;color:var(--text-2);box-shadow:var(--shadow-md);">
+      识别成功后需手动点击「开始建图」进入自动建图 ／ 识别失败 → 重新摆放并重试，机器人原地等待
+    </div>
+    <div class="card" id="anchorOkBar" style="display:none;position:absolute;bottom:110px;left:50%;transform:translateX(-50%);padding:20px 36px;text-align:center;box-shadow:var(--shadow-md);z-index:6;">
+      <div style="font-size:15px;font-weight:600;color:var(--success);margin-bottom:14px;">✓ 初始点识别成功</div>
+      <button class="btn btn-primary" style="min-width:200px;" onclick="showPage('p-explore')">开始建图</button>
+    </div>
+  </div>
+
+  <!-- ==================== Page: P06 自主建图（F04 自动建图·暂停/恢复）· 评审后双栏样式 ==================== -->
+  <div class="page" id="p-explore">
+    <button class="backbtn" style="position:absolute;top:48px;left:20px;z-index:8;" onclick="confirmExit()">‹</button>
+    <div class="state-switcher">
+      <span class="lab">状态预览</span>
+      <button class="state-btn active" onclick="exploreState('running',this)">探索中</button>
+      <button class="state-btn" onclick="exploreState('paused',this)">已暂停</button>
+      <button class="state-btn" onclick="exploreState('paused',this,true)">暂停·已移动</button>
+    </div>
+
+    <div id="expMovedBanner" style="display:none;position:absolute;top:58px;left:50%;transform:translateX(-50%);z-index:7;width:900px;text-align:center;background:var(--warn-light);border:1px solid var(--warn);color:#92400e;border-radius:10px;padding:12px 24px;font-size:14.5px;line-height:1.6;box-shadow:var(--shadow-sm);">⚠ 检测到暂停期间机器人被移动，已越过禁行线。请将机器人推回可运行区域内，再点击继续建图。</div>
+
+    <div class="exp-layout">
+      <!-- 左：地图面板 -->
+      <div class="exp-left">
+        <div class="exp-maparea" id="expMapWrap">
+          <div id="expMap" style="position:absolute;inset:0;">
+            <svg viewBox="0 0 640 440" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <linearGradient id="coneGrad" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0" stop-color="#8ab6ff" stop-opacity=".95"/>
+                  <stop offset="1" stop-color="#1677ff" stop-opacity=".12"/>
+                </linearGradient>
+              </defs>
+              <rect width="640" height="440" fill="#e3e6ea"/>
+              <rect x="70" y="52" width="500" height="336" fill="#eef1f5" stroke="#3b82f6" stroke-width="1.5"/>
+              <g class="seg"><path d="M140 300 L220 240 L300 262 L322 330 L220 360 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/></g>
+              <g class="seg"><path d="M220 240 L282 162 L380 150 L420 212 L300 262 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/></g>
+              <g class="seg"><path d="M380 150 L470 132 L522 200 L482 270 L420 212 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/></g>
+              <g class="seg"><path d="M140 300 L112 352 L182 382 L230 356 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/></g>
+              <g class="seg"><path d="M282 162 L272 92 L362 76 L412 112 L380 150 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/></g>
+              <g class="seg"><path d="M522 200 L548 262 L524 322 L482 270 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/></g>
+              <g class="seg"><path d="M322 330 L340 372 L250 380 L230 356 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/></g>
+              <path class="route-line" d="M320 240 L262 262 L222 300 L182 340 L240 352 L300 322 L340 262 L382 202 L432 182 L472 222 L502 262" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round"/>
+              <g transform="translate(320,240)">
+                <path d="M0 -48 L28 -6 L0 -16 L-28 -6 Z" fill="url(#coneGrad)"/>
+                <path d="M0 -32 L10 -8 L4 -13 L4 20 L-4 20 L-4 -13 L-10 -8 Z" fill="#22c55e"/>
+              </g>
+            </svg>
+          </div>
+          <div style="position:absolute;top:12px;right:14px;display:flex;gap:10px;z-index:5;">
+            <div style="background:rgba(255,255,255,.94);border-radius:10px;padding:9px 16px;font-size:13px;color:var(--text-2);box-shadow:var(--shadow-sm);">已探索面积&nbsp;<b style="color:var(--text-1);">约 <span id="areaNum2">86.0</span> m²</b></div>
+            <div style="background:rgba(255,255,255,.94);border-radius:10px;padding:9px 16px;font-size:13px;color:var(--text-2);box-shadow:var(--shadow-sm);">探索时长&nbsp;<b style="color:var(--text-1);" id="durNum">12 分 36 秒</b></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右：状态面板（大暂停圆钮） -->
+      <div class="exp-right">
+        <div class="exp-dot" id="expDot"></div>
+        <div class="exp-title" id="expTitle">自主建图中</div>
+        <div class="exp-sub">已探索面积 约 <b id="areaNum">86.0</b> m²</div>
+        <button class="exp-circle" id="expCircle" title="暂停 / 继续" onclick="exploreToggle()"><svg viewBox="0 0 56 56"><rect x="13" y="10" width="11" height="36" rx="3" fill="#fff"/><rect x="32" y="10" width="11" height="36" rx="3" fill="#fff"/></svg></button>
+        <button class="exp-end" id="expEnd" style="visibility:hidden;" onclick="openDialog('d-exit')">⏹ 结束建图</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Page: P07 返航中（F04 建图完成自主返航）· 与探索页同款双栏样式 ==================== -->
+  <div class="page" id="p-return">
+    <button class="backbtn" style="position:absolute;top:48px;left:20px;z-index:8;pointer-events:none;opacity:.5;">‹</button>
+    <div class="exp-layout">
+      <!-- 左：地图面板 -->
+      <div class="exp-left">
+        <div class="exp-maparea">
+          <div class="playing" style="position:absolute;inset:0;">
+            <svg viewBox="0 0 640 440" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <linearGradient id="coneGrad2" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0" stop-color="#8ab6ff" stop-opacity=".95"/>
+                  <stop offset="1" stop-color="#1677ff" stop-opacity=".12"/>
+                </linearGradient>
+              </defs>
+              <rect width="640" height="440" fill="#e3e6ea"/>
+              <rect x="70" y="52" width="500" height="336" fill="#eef1f5" stroke="#3b82f6" stroke-width="1.5"/>
+              <g opacity=".92">
+                <path d="M140 300 L220 240 L300 262 L322 330 L220 360 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/>
+                <path d="M220 240 L282 162 L380 150 L420 212 L300 262 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/>
+                <path d="M380 150 L470 132 L522 200 L482 270 L420 212 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/>
+                <path d="M140 300 L112 352 L182 382 L230 356 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/>
+                <path d="M282 162 L272 92 L362 76 L412 112 L380 150 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/>
+                <path d="M522 200 L548 262 L524 322 L482 270 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/>
+                <path d="M322 330 L340 372 L250 380 L230 356 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/>
+              </g>
+              <path id="retPath" d="M502 262 L432 182 L340 262 L300 322 L240 352 L182 340 L222 300 L262 262 L320 240" fill="none" stroke="#16a34a" stroke-width="3.5" stroke-dasharray="10 7"/>
+              <circle r="8" fill="#16a34a">
+                <animateMotion dur="5s" repeatCount="indefinite"><mpath href="#retPath"/></animateMotion>
+              </circle>
+              <g transform="translate(320,240)">
+                <path d="M0 -48 L28 -6 L0 -16 L-28 -6 Z" fill="url(#coneGrad2)"/>
+                <path d="M0 -32 L10 -8 L4 -13 L4 20 L-4 20 L-4 -13 L-10 -8 Z" fill="#22c55e"/>
+                <circle cx="0" cy="0" r="34" fill="none" stroke="#22c55e" stroke-width="2" stroke-dasharray="6 5"/>
+                <text x="0" y="58" text-anchor="middle" font-size="16" fill="#15803d" font-weight="600">初始点</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右：状态面板 -->
+      <div class="exp-right">
+        <div class="exp-dot"></div>
+        <div class="exp-title">自主返航中</div>
+        <div class="exp-sub">正在按地图规划路线返回初始点 · 路径受阻时自动重新规划</div>
+        <div class="exp-circle" style="cursor:default;">
+          <svg viewBox="0 0 56 56"><path d="M28 7 L51 27 H44 V47 H33 V35 H23 V47 H12 V27 H5 Z" fill="#fff"/></svg>
+        </div>
+        <div class="exp-sub" style="margin-top:32px;">到达初始点后，将自动进行地图优化并保存</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Page: P08 地图优化中（F05 完成判定→F06 保存前置） ==================== -->
+  <div class="page" id="p-optimize">
+    <div class="card" style="position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);padding:44px 70px;text-align:center;box-shadow:var(--shadow-md);">
+      <span class="spin" style="width:34px;height:34px;border-width:4px;margin-bottom:18px;"></span>
+      <div style="font-size:20px;font-weight:700;margin-top:14px;">地图优化中</div>
+      <p class="hint" style="margin-top:8px;">已返回初始点，正在对本次探索地图进行优化，完成后自动保存</p>
+    </div>
+  </div>
+
+  <!-- ==================== Page: P09 保存成功（F06 地图保存后处理） ==================== -->
+  <div class="page" id="p-saved">
+    <div class="navrow"><button class="backbtn" onclick="showPage('p-maplist')">‹</button><span class="page-title">自动建图</span></div>
+    <div class="state-switcher">
+      <span class="lab">状态预览</span>
+      <button class="state-btn active" onclick="savedVariant('normal',this)">正常完成</button>
+      <button class="state-btn" onclick="savedVariant('lowbatt',this)">因电量过低返航</button>
+      <button class="state-btn" onclick="savedVariant('blocked',this)">部分区域被阻挡放弃</button>
+    </div>
+
+    <div class="card" style="width:920px;margin:14px auto 0;padding:28px 36px;">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="width:52px;height:52px;border-radius:50%;background:var(--success-light);color:var(--success);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;">✓</div>
+        <div>
+          <div style="font-size:21px;font-weight:700;">自动建图已完成</div>
+          <div class="hint" style="margin-top:3px;">地图已自动优化并保存 · 返航点、禁区等地图元素将由你手动添加</div>
+        </div>
+      </div>
+      <div id="svLowbatt" style="display:none;margin-top:16px;background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:12px 16px;font-size:13.5px;color:#92400e;line-height:1.7;">⚠ 该地图因<b>电量过低自动返航</b>生成，请及时检查已扫图区域是否满足清洁范围。若不满足，可手动扩展建图。</div>
+      <div id="svBlocked" style="display:none;margin-top:16px;background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:12px 16px;font-size:13.5px;color:#92400e;line-height:1.7;">⚠ 探索过程中<b>部分区域因持续阻挡已放弃</b>，请在返回后检查已扫图区域是否满足清洁范围。若不满足，可手动扩展建图。</div>
+      <div style="margin-top:20px;padding:18px 22px;background:#f7f8fa;border-radius:10px;">
+        <div class="hint" style="font-size:13px;margin-bottom:12px;">本次建图结果 <span style="color:var(--text-3);">· 已扫描区域大图预览</span></div>
+        <div style="width:100%;height:340px;background:#e8edf5;border:1px solid #e3e6ea;border-radius:8px;overflow:hidden;">
+          <svg viewBox="80 40 500 360" width="100%" height="340" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <linearGradient id="coneGrad3" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0" stop-color="#8ab6ff" stop-opacity=".95"/>
+                <stop offset="1" stop-color="#1677ff" stop-opacity=".12"/>
+              </linearGradient>
+            </defs>
+            <rect width="640" height="440" fill="#e3e6ea"/>
+            <rect x="70" y="52" width="500" height="336" fill="#eef1f5" stroke="#3b82f6" stroke-width="1.5"/>
+            <path d="M140 300 L220 240 L300 262 L322 330 L220 360 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/>
+            <path d="M220 240 L282 162 L380 150 L420 212 L300 262 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/>
+            <path d="M380 150 L470 132 L522 200 L482 270 L420 212 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/>
+            <path d="M140 300 L112 352 L182 382 L230 356 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/>
+            <path d="M282 162 L272 92 L362 76 L412 112 L380 150 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/>
+            <path d="M522 200 L548 262 L524 322 L482 270 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/>
+            <path d="M322 330 L340 372 L250 380 L230 356 Z" fill="#dbe7ff" stroke="#5f95ff" stroke-width="1.8"/>
+            <path d="M320 240 L262 262 L222 300 L182 340 L240 352 L300 322 L340 262 L382 202 L432 182 L472 222 L502 262" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round"/>
+            <g transform="translate(320,240)">
+              <path d="M0 -48 L28 -6 L0 -16 L-28 -6 Z" fill="url(#coneGrad3)"/>
+              <path d="M0 -32 L10 -8 L4 -13 L4 20 L-4 20 L-4 -13 L-10 -8 Z" fill="#22c55e"/>
+            </g>
+          </svg>
+        </div>
+        <div style="display:flex;gap:40px;align-items:center;margin-top:14px;font-size:14px;color:var(--text-2);flex-wrap:wrap;">
+          <div>已建图面积：<b style="color:var(--text-1);">约 86.0 m²</b></div>
+          <div>建图用时：<b style="color:var(--text-1);">12 分 36 秒</b></div>
+          <div>地图元素：路径 1 条 · 返航点与禁区需手动添加</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:14px;padding:14px 16px;background:#f7f8fa;border-radius:8px;">
+        <span class="hint" style="font-size:13px;">地图名称（自动命名 · 规则待确认）</span>
+        <b style="font-size:16px;" id="mapName">自动建图_20260921_1103</b>
+        <span class="link-btn" onclick="renameMap()">✏️ 重命名</span>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:20px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="showToast('进入地图编辑（沿用现有三步完成向导：区域点位路径 → 安全校验 → 完成），原型不展开')">编辑地图</button>
+        <button class="btn btn-plain" style="flex:1;" onclick="finishToCloud()">暂不编辑，返回列表</button>
+      </div>
+      <p class="hint" style="margin-top:14px;line-height:1.7;">📎 地图<b>不自动上传</b>云端：可在地图列表手动上传，或重命名后自动上传。上传后方可通过云端同步、在 Pudulink 查看地图。</p>
+    </div>
+  </div>
+
+  <!-- ==================== Page: P10 异常闭环演示面板（F04-d 异常场景闭环） ==================== -->
+  <div class="page" id="p-abnormal">
+    <div class="navrow"><button class="backbtn" onclick="showPage('p-maplist')">‹</button><span class="page-title">异常闭环 · 原型样式演示</span><span class="hint" style="margin-left:auto;">点击「查看原型」查看对应弹窗 / 页面状态</span></div>
+    <div style="position:absolute;top:92px;bottom:16px;left:0;right:0;overflow:auto;">
+    <div style="font-weight:700;font-size:15px;margin:8px 26px;">建图过程中异常</div>
+    <table class="ab-table">
+      <tr><th style="width:56px;">编号</th><th style="width:180px;">异常场景</th><th>机器人行为</th><th>用户可见反馈与操作</th><th style="width:110px;">原型</th></tr>
+      <tr><td><span class="ab-badge">中1</span></td><td>建图中定位丢失</td><td>停止探索</td><td>「建图失败，请重新建图」→ 重新发起建图</td><td><button class="link-btn" onclick="openDialog('d-fail')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">中2</span></td><td>被困且脱困失败</td><td>原地等待人工介入</td><td>本体提示受阻；Pudulink 通知协助清理；可「继续建图」或「取消建图」（取消需二次确认是否保存已探索区域）</td><td><button class="link-btn" onclick="openDialog('d-stuck')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">中3</span></td><td>建图中电量不足（≤15%）</td><td>结束建图，返回初始点，正常优化并保存</td><td>Pudulink 通知 + 保存成功页提醒「可手动扩展建图」</td><td><button class="link-btn" onclick="savedVariant('lowbatt');showPage('p-saved')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">中4</span></td><td>探索长时间无进展</td><td>结束探索，返回初始点，正常优化保存</td><td>进入优化保存流程</td><td><button class="link-btn" onclick="showPage('p-return')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">中5</span></td><td>动态障碍持续阻挡</td><td>先绕行；持续受阻原地等待，超时后跳过该区域继续探索</td><td>Pudulink 通知 + 保存成功页统一提示未覆盖区域</td><td><button class="link-btn" onclick="savedVariant('blocked');showPage('p-saved')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">中6</span></td><td>用户主动结束建图</td><td>停止移动，结束探索</td><td>暂停 → 结束建图 → 用户选择「返航」或「直接编辑地图」</td><td><button class="link-btn" onclick="openDialog('d-exit')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge b">中7</span></td><td>建图中触发急停</td><td>立即停止移动</td><td>急停页面；复位后支持继续自动建图</td><td><button class="link-btn" onclick="showPage('p-estop')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge b">中8</span></td><td>内存（存储）空间不足</td><td>结束探索，返回初始点</td><td>提示存储空间不足</td><td><button class="link-btn" onclick="openDialog('d-storage')">查看原型</button></td></tr>
+    </table>
+    <div style="font-weight:700;font-size:15px;margin:16px 26px 8px;">建图后异常（返航与保存）</div>
+    <table class="ab-table" style="margin-bottom:24px;">
+      <tr><th style="width:56px;">编号</th><th style="width:180px;">异常场景</th><th>机器人行为</th><th>用户可见反馈与操作</th><th style="width:110px;">原型</th></tr>
+      <tr><td><span class="ab-badge">后1</span></td><td>返航路径受阻</td><td>停止 → 原地优化保存地图</td><td>Pudulink 通知「返航受阻已停在原地，请前往推回」；本体地图保存成功</td><td><button class="link-btn" onclick="showToast('原型：返航页叠加受阻提示 + 保存成功页（复用 P07/P09）')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">后2</span></td><td>返航中定位异常</td><td>停止 → 优化保存地图</td><td>地图保存成功；提醒用户推回起始点</td><td><button class="link-btn" onclick="showToast('原型：保存成功页 + 推回提醒（复用 P09）')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">后3</span></td><td>返航中电量耗尽（≤5% 停止）</td><td>停止 → 优化保存地图</td><td>地图保存成功；提醒用户推回充电</td><td><button class="link-btn" onclick="savedVariant('lowbatt');showPage('p-saved')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">后4</span></td><td>初始点被占用</td><td>停在附近等待 → 优化保存地图</td><td>Pudulink 通知「起始点被占用，机器人已停在附近」；本体保存成功</td><td><button class="link-btn" onclick="showToast('原型：返航页叠加占用提示 + 保存成功页（复用 P07/P09）')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">后5</span></td><td>地图保存失败</td><td>自动重试一次；仍失败弹出提醒</td><td>「保存失败，请再次点击保存」→ 仍失败「储存异常，请联系技术人员」</td><td><button class="link-btn" onclick="openDialog('d-savefail')">查看原型</button></td></tr>
+    </table>
+    </div>
+  </div>
+
+  <!-- ==================== Page: P11 急停（异常 中7） ==================== -->
+  <div class="page" id="p-estop" style="background:#c9202a;">
+    <div style="position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#fff;">
+      <div style="font-size:64px;">⛔</div>
+      <div style="font-size:30px;font-weight:700;margin-top:14px;">急停已触发</div>
+      <p style="margin-top:12px;font-size:16px;opacity:.92;line-height:1.8;">机器人已立即停止移动<br>请排除险情后，旋转释放急停按钮完成复位</p>
+      <button class="btn" style="background:#fff;color:#c9202a;margin-top:26px;font-weight:600;" onclick="showPage('p-explore');exploreState('running');showToast('复位成功，继续自动建图')">已复位，继续自动建图</button>
+    </div>
+  </div>
+
+  <!-- ==================== 弹窗层 ==================== -->
+  <!-- F04 异常 中1：定位丢失 -->
+  <div class="dialog-mask" id="d-fail"><div class="dialog danger">
+    <button class="d-close" onclick="closeDialog('d-fail')">✕</button>
+    <h3>建图失败</h3>
+    <div class="d-body" style="text-align:center;">环境剧变或传感器异常导致定位丢失，本次探索已终止。<br>已探索区域数据将不会保存。</div>
+    <div class="d-btns">
+      <button class="btn btn-plain" onclick="closeDialog('d-fail')">返回建图方式</button>
+      <button class="btn btn-primary" onclick="closeDialog('d-fail');showPage('p-check');">重新发起建图</button>
+    </div>
+  </div></div>
+
+  <!-- F04 异常 中2：被困脱困失败 -->
+  <div class="dialog-mask" id="d-stuck"><div class="dialog warn">
+    <button class="d-close" onclick="closeDialog('d-stuck')">✕</button>
+    <h3>机器人受阻，请协助清理障碍</h3>
+    <div class="d-body">机器人探索地图时被困，脱困失败已原地等待。<br><span class="hint">已同步在 Pudulink 通知：机器人探索地图中受阻，需协助清理障碍。</span></div>
+    <div class="d-btns">
+      <button class="btn btn-plain" onclick="closeDialog('d-stuck');openDialog('d-stuck2')">取消建图</button>
+      <button class="btn btn-primary" onclick="closeDialog('d-stuck');showToast('障碍已清理，继续执行自动建图')">继续建图</button>
+    </div>
+  </div></div>
+  <div class="dialog-mask" id="d-stuck2"><div class="dialog">
+    <button class="d-close" onclick="closeDialog('d-stuck2')">✕</button>
+    <h3>是否保存已探索区域的地图？</h3>
+    <div class="d-body" style="text-align:center;">取消建图后可选择保留已探索部分</div>
+    <div class="d-btns">
+      <button class="btn btn-plain" onclick="closeDialog('d-stuck2');showToast('不保存，返回建图起始页');showPage('p-mode')">否，不保存</button>
+      <button class="btn btn-primary" onclick="closeDialog('d-stuck2');showPage('p-optimize')">是，进入编辑地图</button>
+    </div>
+  </div></div>
+
+  <!-- F04 异常 中6：主动结束选择 -->
+  <div class="dialog-mask" id="d-exit"><div class="dialog">
+    <button class="d-close" onclick="closeDialog('d-exit')">✕</button>
+    <h3>结束建图</h3>
+    <div class="d-body" style="text-align:center;">结束探索后，你希望：</div>
+    <div class="d-btns">
+      <button class="btn btn-primary" onclick="closeDialog('d-exit');showPage('p-return')">返航至初始点<br><span style="font-size:12px;opacity:.85;">自动优化地图并保存</span></button>
+      <button class="btn btn-plain" onclick="closeDialog('d-exit');showPage('p-optimize')">直接编辑地图<br><span style="font-size:12px;color:var(--text-3);">原地进入自动优化流程</span></button>
+    </div>
+  </div></div>
+
+  <!-- P06 暂停后继续：位置确认提醒 -->
+  <div class="dialog-mask" id="d-movecheck"><div class="dialog warn">
+    <button class="d-close" onclick="closeDialog('d-movecheck')">✕</button>
+    <h3>继续建图前请确认</h3>
+    <div class="d-body" style="text-align:center;">请确保您在机器人可运行区域内，再继续建图。</div>
+    <div class="d-btns">
+      <button class="btn btn-plain" onclick="closeDialog('d-movecheck')">取消</button>
+      <button class="btn btn-primary" onclick="closeDialog('d-movecheck');exploreState('running');showToast('已确认位置，继续自动建图')">确认，继续建图</button>
+    </div>
+  </div></div>
+
+  <!-- 启动校验不通过：勿扰 -->
+  <div class="dialog-mask" id="d-dunwu"><div class="dialog warn">
+    <button class="d-close" onclick="closeDialog('d-dunwu');showPage('p-mode')">✕</button>
+    <h3>机器人处于勿扰模式</h3>
+    <div class="d-body" style="text-align:center;">当前处于勿扰时间段，自动建图过程中机器人移动可能产生噪声、影响他人。<br><span class="hint">你可以取消并稍后再试，也可以手动确认继续执行自动建图。</span></div>
+    <div class="d-btns">
+      <button class="btn btn-plain" onclick="closeDialog('d-dunwu');showPage('p-mode')">取消，稍后再试</button>
+      <button class="btn btn-primary" onclick="closeDialog('d-dunwu');confirmDunwu()">仍要继续建图</button>
+    </div>
+  </div></div>
+
+  <!-- 启动校验不通过：电量 -->
+  <div class="dialog-mask" id="d-lowbatt"><div class="dialog warn">
+    <button class="d-close" onclick="closeDialog('d-lowbatt')">✕</button>
+    <h3>无法开始自动建图</h3>
+    <div class="d-body" style="text-align:center;">当前电量不足 80%，请先充电。<br><span class="hint">自动建图电量标准：≥ 80%</span></div>
+    <div class="d-btns"><button class="btn btn-primary" onclick="closeDialog('d-lowbatt')">知道了</button></div>
+  </div></div>
+
+  <!-- 异常 中8：存储不足 -->
+  <div class="dialog-mask" id="d-storage"><div class="dialog warn">
+    <button class="d-close" onclick="closeDialog('d-storage')">✕</button>
+    <h3>存储空间不足</h3>
+    <div class="d-body" style="text-align:center;">本地地图存储空间已达上限，无法继续自动建图。<br><span class="hint">请删除不需要的地图，或同步上传云端后重试。</span></div>
+    <div class="d-btns">
+      <button class="btn btn-plain" onclick="closeDialog('d-storage')">返回</button>
+      <button class="btn btn-primary" onclick="closeDialog('d-storage');showToast('跳转地图管理（原型不展开）')">管理地图</button>
+    </div>
+  </div></div>
+
+  <!-- 异常 后5：保存失败 -->
+  <div class="dialog-mask" id="d-savefail"><div class="dialog warn">
+    <button class="d-close" onclick="closeDialog('d-savefail')">✕</button>
+    <h3>地图保存失败</h3>
+    <div class="d-body" style="text-align:center;">保存失败，请再次点击保存。<br><span class="hint">已自动重试一次；若仍失败将提示「储存异常，请联系技术人员」。</span></div>
+    <div class="d-btns">
+      <button class="btn btn-plain" onclick="closeDialog('d-savefail');showToast('储存异常，请联系技术人员')">仍失败</button>
+      <button class="btn btn-primary" onclick="closeDialog('d-savefail');showToast('保存成功')">再次保存</button>
+    </div>
+  </div></div>
+
+  <!-- 初始点识别失败 -->
+  <div class="dialog-mask" id="d-anchorfail"><div class="dialog warn">
+    <button class="d-close" onclick="closeDialog('d-anchorfail')">✕</button>
+    <h3>初始点识别失败</h3>
+    <div class="d-body" style="text-align:center;">未识别到可定位的初始点，请重新摆放机器人至<b>充电桩、工作站或定位码附近</b>后重试。<br><span class="hint">机器人将保持在原地等待。</span></div>
+    <div class="d-btns">
+      <button class="btn btn-plain" onclick="closeDialog('d-anchorfail');showPage('p-mode')">返回</button>
+      <button class="btn btn-primary" onclick="closeDialog('d-anchorfail');anchorState('scanning')">重新识别</button>
+    </div>
+  </div></div>
+
+  <div class="toast" id="toast"></div>
+</div>
+</div>
+</div>
+
+<!-- ===== 走查脚本面板 ===== -->
+<div class="walkthrough-panel" id="walkPanel">
+  <span class="wt-close" onclick="toggleWalkthrough()">✕</span>
+  <h3>🎬 原型走查脚本 — 自动建图主流程</h3>
+  <p class="meta">演示时长约 6 分钟｜对应 PRD 四、业务流程（V2 通用版）｜画布：CC1 本体屏 1280×800</p>
+  <table>
+    <thead><tr><th style="width:44px;">步骤</th><th style="width:170px;">页面</th><th>操作</th><th>预期效果</th><th style="width:90px;">验证功能</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>P01 地图列表</td><td>点击「新建」</td><td>进入 P02 选择建图方式，新增「自动建图（NEW）」选项</td><td>F02 入口</td></tr>
+      <tr><td>2</td><td>P02 选择建图方式</td><td>点击「自动建图」</td><td>点「自动建图」卡片选中 → 显示「建图时间」（默认无限制，到时自动返航）与「开始自动建图」按钮 → 点击进入 P03；手推建图点击提示走现有流程</td><td>F02</td></tr>
+      <tr><td>3</td><td>P03 启动前检查</td><td>观察自动校验</td><td>电量/状态/存储/自检逐项通过后「开始探索」亮起</td><td>F03 校验</td></tr>
+      <tr><td>4</td><td>P03 启动前检查</td><td>状态预览切「勿扰拦截」「电量不足」</td><td>勿扰：弹窗可「仍要继续建图」（确认后状态项标「勿扰中」并可继续）；电量不足：拦截并停留当前页</td><td>F03</td></tr>
+      <tr><td>5</td><td>P04 现场准备提示</td><td>阅读三项准备 + 初始点设定说明，点「开始识别」</td><td>进入 P05 初始点识别</td><td>F03 前置说明</td></tr>
+      <tr><td>6</td><td>P05 初始点识别</td><td>状态预览切「识别失败」→ 弹窗「重新识别」</td><td>失败提示重新摆放原地等待；切「识别成功」→ 出现「开始建图」按钮，手动点击后进入自动建图</td><td>F03 初始点</td></tr>
+      <tr><td>7</td><td>P06 自主探索</td><td>观察双栏页面（评审后新样式）</td><td>左侧「显示地图」面板实时生长（清洁轨迹动画），右侧「自主建图中」+ 大暂停圆钮</td><td>F04 探索</td></tr>
+      <tr><td>8</td><td>P06 自主探索</td><td>点右侧大圆钮暂停 → 再点恢复；切「暂停·已移动」观察顶部提示</td><td>「已暂停」（圆钮变播放、出现「结束建图」）→ 无移动时直接恢复；有移动（越界）时暂停页顶部提示「已越过禁行线，请推回可运行区域」，点继续弹「请确保您在机器人可运行区域内」确认弹窗；地图右上角展示「已探索面积（约XXm²）」「探索时长」</td><td>F04 暂停/恢复</td></tr>
+      <tr><td>9</td><td>P06 自主探索</td><td>暂停 →「结束建图」→ 选「直接编辑地图」</td><td>原地进入 P08 自动优化并保存（主动结束分支）</td><td>F04 主动结束</td></tr>
+      <tr><td>10</td><td>P06 自主探索</td><td>暂停 →「结束建图」→ 选「返航至初始点」</td><td>进入 P07 返航中（与探索页同款双栏样式），路径动画回初始点</td><td>F04 返航</td></tr>
+      <tr><td>11</td><td>P07→P08→P09</td><td>返航到达 → 观察自动流转</td><td>「地图优化中」→「自动建图已完成」保存成功页</td><td>F04/F06</td></tr>
+      <tr><td>12</td><td>P09 保存成功</td><td>切「因电量过低返航」「部分区域被阻挡放弃」变体</td><td>保存成功页分别叠加提醒，可手动扩展建图</td><td>F06 保存后处理</td></tr>
+      <tr><td>13</td><td>P09 保存成功</td><td>点「✏️ 重命名」→「暂不编辑，返回列表」</td><td>自动命名可改名；返回列表出现新地图卡片 + Pudulink 通知提示</td><td>F06</td></tr>
+      <tr><td>14</td><td>P10 异常面板</td><td>逐条点「查看原型」</td><td>建图中 8 项 + 建图后 5 项异常的原型样式闭环演示</td><td>F04 异常闭环</td></tr>
+    </tbody>
+  </table>
+  <h4>📋 PRD 对齐校验报告</h4>
+  <table>
+    <thead><tr><th>功能编号（PRD §3.1）</th><th>功能点</th><th>原型对应</th><th>状态</th></tr></thead>
+    <tbody>
+      <tr><td>1 功能配置</td><td>高级设置自动建图开关 · 机型默认状态（本期仅 CC1 系列）</td><td>P00（设置页开关 + CC1 系列默认开启）</td><td>✅</td></tr>
+      <tr><td>2 功能入口</td><td>建图工具内新增自动建图入口</td><td>P01→P02（方式选择并列新增）</td><td>✅</td></tr>
+      <tr><td>3 启动校验</td><td>电量≥80%/状态/存储/自检 + 前置说明 + 初始点设定（勿扰可手动确认继续）</td><td>P03（含失败态）→ P04 → P05（含失败重试）</td><td>✅</td></tr>
+      <tr><td>4a 自主探索闭环</td><td>自主移动扫描建图</td><td>P06（实时地图动画）</td><td>✅</td></tr>
+      <tr><td>4b 暂停和恢复</td><td>探索中暂停 / 恢复</td><td>P06 状态切换（探索中/已暂停）</td><td>✅</td></tr>
+      <tr><td>4c 暂停后移动继续</td><td>暂停期间被移动 → 顶部越界提示 + 继续前位置确认</td><td>P06「暂停·已移动」态：顶部提示推回可运行区域；点继续弹「请确保您在机器人可运行区域内」确认弹窗；定位丢失见中1 弹窗</td><td>✅</td></tr>
+      <tr><td>4d 异常闭环</td><td>建图中 8 项 + 建图后 5 项</td><td>P10 异常面板 + 6 个弹窗 + 急停页</td><td>✅</td></tr>
+      <tr><td>4e 完成返航</td><td>探索完成自主返回初始点</td><td>P07（返航路径动画）</td><td>✅</td></tr>
+      <tr><td>5 保存后处理</td><td>自动保存/命名/失败重试/通知/不自动上传/元素不自动加</td><td>P09 + P13 列表新卡片 + 通知 toast</td><td>✅</td></tr>
+      <tr><td colspan="3"><b>非目标核对</b>：过程中添加禁区/虚拟墙、断点续建、扩展建图（待确认）均未实现为可操作功能，仅以置灰/提示出现</td><td>✅</td></tr>
+    </tbody>
+  </table>
+  <h4>📌 待确认项在原型中的呈现</h4>
+  <p class="meta" style="line-height:1.8;">① 单次探索面积上限 ≤X m²（P06 统计条）；② 自动命名规则（P09 名称字段）；③ 探索完成判定时长 X min（P10 中4 说明）；④ 扩展建图支持性（PRD 标注「不支持扩展建图？」）——均以「待确认」字样标注，未擅自定值。</p>
+</div>
+
+<script>
+/* ===== 页面导航 ===== */
+var curPage='p-maplist';
+function showPage(id){
+  if(!id) return;
+  var el=document.getElementById(id);
+  if(!el) return;
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  el.classList.add('active');
+  curPage=id;
+  document.getElementById('quickNav').value=id;
+  if(id==='p-check'){resetChecks();}
+  if(id==='p-explore'){exploreState('running');}
+  if(id==='p-anchor'){anchorState('scanning');}
+  if(id==='p-return'||id==='p-optimize'){autoAdvance(id);}
+}
+/* ===== toast ===== */
+var toastTimer=null;
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('show');},2200);
+}
+/* ===== P03 启动前检查 ===== */
+function resetChecks(){
+  var list=document.querySelectorAll('#checkList .check-item');
+  list.forEach(function(it){it.className='check-item';it.querySelector('.check-state').innerHTML='<span class="spin"></span>';});
+  document.getElementById('checkGo').disabled=true;
+  var order=['batt','status','storage','selftest'],i=0;
+  (function next(){
+    if(i>=order.length){
+      document.getElementById('checkGo').disabled=false;
+      return;
+    }
+    var it=document.querySelector('#checkList .check-item[data-check="'+order[i++]+'"]');
+    setTimeout(function(){it.classList.add('ok');it.querySelector('.check-state').textContent='通过';next();},560);
+  })();
+}
+function checkState(state,btn){
+  if(btn){btn.parentElement.querySelectorAll('.state-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');}
+  resetChecks();
+  if(state==='dunwu'){
+    setTimeout(function(){
+      var it=document.querySelector('#checkList .check-item[data-check="status"]');
+      it.classList.add('warn');it.querySelector('.check-state').textContent='勿扰中';
+      openDialog('d-dunwu');
+    },900);
+  }
+  if(state==='lowbatt'){
+    setTimeout(function(){
+      var it=document.querySelector('#checkList .check-item[data-check="batt"]');
+      it.classList.add('fail');it.querySelector('.check-state').textContent='不通过';
+      openDialog('d-lowbatt');
+    },1200);
+  }
+}
+function confirmDunwu(){
+  var it=document.querySelector('#checkList .check-item[data-check="status"]');
+  it.className='check-item warn';
+  it.querySelector('.check-state').textContent='勿扰中（已确认继续）';
+  document.getElementById('checkGo').disabled=false;
+  showToast('已手动确认：将忽略勿扰限制继续自动建图');
+}
+/* ===== P05 初始点识别 ===== */
+function anchorState(state,btn){
+  if(btn){btn.parentElement.querySelectorAll('.state-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');}
+  var b1=document.getElementById('anchorScanBanner');
+  var ok=document.getElementById('anchorOkBar');
+  var hint=document.getElementById('anchorHintCard');
+  if(state==='scanning'){
+    b1.style.display='flex';ok.style.display='none';hint.style.display='block';
+  }else if(state==='ok'){
+    b1.style.display='none';hint.style.display='none';ok.style.display='block';
+    showToast('初始点识别成功，请点击「开始建图」进入自动建图');
+  }else{
+    b1.style.display='none';ok.style.display='none';hint.style.display='block';
+    openDialog('d-anchorfail');
+  }
+}
+/* ===== P06 探索状态（评审后：双栏布局，大圆钮切换暂停/继续） ===== */
+var areaTimer=null,area=86.0,durSec=756;
+function fmtDur(s){var m=Math.floor(s/60);return m+' 分 '+Math.round(s%60)+' 秒';}
+var SVG_PAUSE='<svg viewBox="0 0 56 56"><rect x="13" y="10" width="11" height="36" rx="3" fill="#fff"/><rect x="32" y="10" width="11" height="36" rx="3" fill="#fff"/></svg>';
+var SVG_PLAY='<svg viewBox="0 0 56 56"><path d="M18 10 L47 28 L18 46 Z" fill="#fff"/></svg>';
+function exploreState(state,btn,moved){
+  clearInterval(areaTimer);
+  if(btn){btn.parentElement.querySelectorAll('.state-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');}
+  var map=document.getElementById('expMap');
+  var dot=document.getElementById('expDot'),title=document.getElementById('expTitle');
+  var circle=document.getElementById('expCircle'),endBtn=document.getElementById('expEnd');
+  var wiState=document.getElementById('wiState');
+  if(state==='running'){
+    map.classList.add('playing');
+    dot.className='exp-dot';title.textContent='自主建图中';
+    circle.innerHTML=SVG_PAUSE;endBtn.style.visibility='hidden';
+    movedFlag=false;
+    var mv0=document.getElementById('expMovedBanner');if(mv0)mv0.style.display='none';
+    if(wiState){wiState.textContent='建图中';wiState.style.color='var(--success)';}
+    areaTimer=setInterval(function(){
+      area+=0.4;
+      var a=area.toFixed(1);
+      document.getElementById('areaNum').textContent=a;
+      var a2=document.getElementById('areaNum2');if(a2)a2.textContent=a;
+      durSec+=0.7;
+      var d=document.getElementById('durNum');if(d)d.textContent=fmtDur(durSec);
+    },700);
+  }else{
+    map.classList.remove('playing');
+    dot.className='exp-dot paused';title.textContent='已暂停';
+    circle.innerHTML=SVG_PLAY;endBtn.style.visibility='visible';
+    movedFlag=!!moved;
+    var mv=document.getElementById('expMovedBanner');if(mv)mv.style.display=moved?'block':'none';
+    if(wiState){wiState.textContent='已暂停';wiState.style.color='#b45309';}
+  }
+}
+var movedFlag=false; /* 暂停期间机器人是否有移动：有移动则「继续」前先弹确认 */
+function exploreToggle(){
+  if(document.getElementById('expTitle').textContent==='已暂停'){
+    if(movedFlag){openDialog('d-movecheck');return;}
+    exploreState('running');
+  }else{
+    exploreState('paused');
+  }
+}
+function selectAuto(){
+  var c=document.getElementById('cardAuto');
+  c.style.border='2px solid var(--primary)';
+  c.style.background='rgba(22,119,255,0.04)';
+  c.querySelector('span:last-child').style.color='var(--primary)';
+  document.getElementById('buildTimeBlock').style.display='block';
+  document.getElementById('autoNext').style.display='block';
+  showToast('已选择自动建图，请设置建图时间（默认无限制）');
+}
+function setBt(el){
+  document.querySelectorAll('#buildTimeRow .bt-pill').forEach(function(b){b.classList.remove('bt-on');});
+  el.classList.add('bt-on');
+  showToast('建图时间已设为「'+el.textContent+'」；达到该时长后自动返回初始点');
+}
+/* ===== P07/P08 自动流转 ===== */
+function autoAdvance(id){
+  if(id==='p-return'){setTimeout(function(){if(curPage==='p-return')showPage('p-optimize');},6000);}
+  if(id==='p-optimize'){setTimeout(function(){if(curPage==='p-optimize'){showToast('优化完成，地图已自动保存');showPage('p-saved');}},3200);}
+}
+/* ===== P09 保存成功变体 ===== */
+function savedVariant(v,btn){
+  if(btn){btn.parentElement.querySelectorAll('.state-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');}
+  document.getElementById('svLowbatt').style.display=(v==='lowbatt')?'block':'none';
+  document.getElementById('svBlocked').style.display=(v==='blocked')?'block':'none';
+}
+function renameMap(){
+  var n=prompt('修改地图名称（自动命名规则待确认，此处演示手动改名）:','自动建图_20260921_1103');
+  if(n){document.getElementById('mapName').textContent=n;showToast('已重命名；改名后地图将自动上传云端');}
+}
+function finishToCloud(){
+  showToast('📢 Pudulink 通知：建图已完成，请编辑地图并创建任务');
+  addNewMapCard();
+  setTimeout(function(){showPage('p-maplist');},900);
+}
+function addNewMapCard(){
+  var grid=document.getElementById('mapGrid');
+  if(document.getElementById('newCard')) return;
+  var d=document.createElement('div');d.className='map-card';d.id='newCard';
+  d.innerHTML='<div class="map-thumb" style="background:#dfe4ea;"><svg viewBox="0 0 200 120"><path d="M60 80 L90 40 L130 50 L150 90 L100 105 Z" stroke="#1677ff" stroke-width="3" fill="#e3edff"/></svg><span class="new-chip" style="position:absolute;top:8px;left:8px;">自动建图</span></div><div class="map-name"><span>自动建图_20260921_1103</span><span class="hint">未上传</span></div><div class="map-ops"><span class="edit-chip" onclick="showToast(\'进入地图编辑（现有功能，原型不展开）\')">✎</span><span class="edit-chip" style="background:#eef1f5;color:var(--text-2);padding:8px 14px;" onclick="showToast(\'重命名 / 删除 / 上传云端\')">…</span></div>';
+  grid.prepend(d);
+}
+/* ===== 弹窗 & 开关 ===== */
+function openDialog(id){document.getElementById(id).classList.add('open');}
+function closeDialog(id){document.getElementById(id).classList.remove('open');}
+function toggleSwitch(el){el.classList.toggle('on');showToast(el.classList.contains('on')?'自动建图已开启':'自动建图已关闭（关闭后建图方式页不展示该选项）');}
+function confirmExit(){openDialog('d-exit');}
+/* ===== 走查面板 ===== */
+function toggleWalkthrough(){document.getElementById('walkPanel').classList.toggle('open');}
+/* ===== 缩放自适应 ===== */
+function fit(){
+  var stage=document.querySelector('.device-stage');
+  var s=Math.min((stage.clientWidth-32)/1300,(stage.clientHeight-24)/820,1);
+  document.getElementById('deviceFrame').style.transform='scale('+s+')';
+}
+window.addEventListener('resize',fit);fit();
+/* 时钟 */
+setInterval(function(){
+  var d=new Date();
+  document.getElementById('clock').textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+},1000);
+</script>
+</body>
+</html>
