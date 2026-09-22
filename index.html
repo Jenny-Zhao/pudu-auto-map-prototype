@@ -396,7 +396,7 @@ select.proto-btn{padding:5px 10px;}
       <div class="card" style="flex:1;padding:26px 22px;text-align:center;">
         <div style="font-size:40px;">🚫</div>
         <div style="font-weight:700;margin:10px 0 6px;">粘贴禁入特征码</div>
-        <p class="hint" style="line-height:1.7;">在楼梯、台阶、水池等危险边界粘贴禁入特征码，机器人将自动避让</p>
+        <p class="hint" style="line-height:1.7;">在楼梯、台阶、水池等危险区域，以及不想让机器人进入的区域，请粘贴禁入特征码</p>
       </div>
       <div class="card" style="flex:1;padding:26px 22px;text-align:center;">
         <div style="font-size:40px;">🧹</div>
@@ -511,7 +511,6 @@ select.proto-btn{padding:5px 10px;}
   <!-- ==================== Page: P07 返航中（F04 建图完成自主返航）· 与探索页同款双栏样式 ==================== -->
   <div class="page" id="p-return">
     <button class="backbtn" style="position:absolute;top:48px;left:20px;z-index:8;pointer-events:none;opacity:.5;">‹</button>
-    <div id="retBanner" style="display:none;position:absolute;top:92px;left:50%;transform:translateX(-50%);z-index:7;width:900px;background:var(--warn-light);border:1px solid var(--warn);color:#92400e;border-radius:10px;padding:12px 24px;font-size:14px;line-height:1.7;box-shadow:var(--shadow-sm);text-align:center;"><span id="retBannerText"></span><br><button class="link-btn" style="margin-top:6px;" onclick="showPage('p-saved')">查看地图保存结果 ›</button></div>
     <div class="exp-layout">
       <!-- 左：地图面板 -->
       <div class="exp-left">
@@ -566,9 +565,13 @@ select.proto-btn{padding:5px 10px;}
   <!-- ==================== Page: P08 地图优化中（F05 完成判定→F06 保存前置） ==================== -->
   <div class="page" id="p-optimize">
     <div class="card" style="position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);padding:44px 70px;text-align:center;box-shadow:var(--shadow-md);">
-      <span class="spin" style="width:34px;height:34px;border-width:4px;margin-bottom:18px;"></span>
-      <div style="font-size:20px;font-weight:700;margin-top:14px;">地图优化中</div>
-      <p class="hint" style="margin-top:8px;">已返回初始点，正在对本次探索地图进行优化，完成后自动保存</p>
+      <span class="spin" id="optSpin" style="width:34px;height:34px;border-width:4px;margin-bottom:18px;"></span>
+      <div style="font-size:20px;font-weight:700;margin-top:14px;" id="optTitle">地图优化中</div>
+      <p class="hint" style="margin-top:8px;line-height:1.8;" id="optDesc">已返回初始点，正在对本次探索地图进行优化，完成后自动保存</p>
+      <div class="d-btns" id="optBtns" style="display:none;margin-top:24px;">
+        <button class="btn btn-plain" onclick="showToast('储存异常，请联系技术人员')">仍失败（演示）</button>
+        <button class="btn btn-primary" onclick="optimizeSaveOk()">再次保存</button>
+      </div>
     </div>
   </div>
 
@@ -580,6 +583,9 @@ select.proto-btn{padding:5px 10px;}
       <button class="state-btn active" onclick="savedVariant('normal',this)">正常完成</button>
       <button class="state-btn" onclick="savedVariant('lowbatt',this)">因电量过低返航</button>
       <button class="state-btn" onclick="savedVariant('blocked',this)">部分区域被阻挡放弃</button>
+      <button class="state-btn" onclick="savedVariant('retblocked',this)">返航受阻</button>
+      <button class="state-btn" onclick="savedVariant('retlocatelost',this)">返航定位异常</button>
+      <button class="state-btn" onclick="savedVariant('lowcharge',this)">返航电量过低</button>
     </div>
 
     <div class="card" style="width:920px;margin:14px auto 0;padding:28px 36px;">
@@ -593,6 +599,9 @@ select.proto-btn{padding:5px 10px;}
       <div id="svLowbatt" style="display:none;margin-top:16px;background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:12px 16px;font-size:13.5px;color:#92400e;line-height:1.7;">⚠ 该地图因<b>电量过低自动返航</b>生成，请及时检查已扫图区域是否满足清洁范围。若不满足，可手动扩展建图。</div>
       <div id="svBlocked" style="display:none;margin-top:16px;background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:12px 16px;font-size:13.5px;color:#92400e;line-height:1.7;">⚠ 探索过程中<b>部分区域因持续阻挡已放弃</b>，请在返回后检查已扫图区域是否满足清洁范围。若不满足，可手动扩展建图。</div>
       <div id="svStoragefull" style="display:none;margin-top:16px;background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:12px 16px;font-size:13.5px;color:#92400e;line-height:1.7;">⚠ 该地图是因<b>储存已满，自动返航</b>生成，请及时检查已扫图区域是否满足清洁范围。若不满足，可删除多余地图，再手动扩展建图。<br><span class="hint">Pudulink 已通知：机器人储存空间已满，已返回起始点。</span></div>
+      <div id="svRetBlocked" style="display:none;margin-top:16px;background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:12px 16px;font-size:13.5px;color:#92400e;line-height:1.7;">⚠ 返航时<b>通道被临时堵塞</b>，机器人已停在原地，地图已优化并保存。<br><span class="hint">Pudulink 已通知：返航时受阻已停在原地，请前往场地内推回机器。</span></div>
+      <div id="svRetLocatelost" style="display:none;margin-top:16px;background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:12px 16px;font-size:13.5px;color:#92400e;line-height:1.7;">⚠ 返航时<b>定位异常</b>，机器人已停在原地，地图已优化并保存。<br><span class="hint">Pudulink 已通知：返航时定位异常已停在原地，请前往场地内推回机器。</span></div>
+      <div id="svLowcharge" style="display:none;margin-top:16px;background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:12px 16px;font-size:13.5px;color:#92400e;line-height:1.7;">⚠ 自主建图已完成，机器人电量过低，请及时进行充电。</div>
       <div style="margin-top:20px;padding:18px 22px;background:#f7f8fa;border-radius:10px;">
         <div class="hint" style="font-size:13px;margin-bottom:12px;">本次建图结果 <span style="color:var(--text-3);">· 已扫描区域大图预览</span></div>
         <div style="width:100%;height:340px;background:#e8edf5;border:1px solid #e3e6ea;border-radius:8px;overflow:hidden;">
@@ -645,20 +654,19 @@ select.proto-btn{padding:5px 10px;}
     <div style="font-weight:700;font-size:15px;margin:8px 26px;">建图过程中异常</div>
     <table class="ab-table">
       <tr><th style="width:56px;">编号</th><th style="width:180px;">异常场景</th><th>机器人行为</th><th>用户可见反馈与操作</th><th style="width:110px;">原型</th></tr>
-      <tr><td><span class="ab-badge">中1</span></td><td>建图中定位丢失</td><td>停止探索</td><td>本体「定位异常，本次探索已终止。已探索区域数据将不会保存」+ Pudulink 通知；重新发起建图</td><td><button class="link-btn" onclick="openDialog('d-fail')">查看原型</button></td></tr>
-      <tr><td><span class="ab-badge">中2</span></td><td>被困且脱困失败</td><td>原地等待人工介入</td><td>本体提示受阻；Pudulink 通知协助清理；可「继续建图」或「取消建图」（取消需二次确认是否保存已探索区域）</td><td><button class="link-btn" onclick="openDialog('d-stuck')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">中1</span></td><td>建图中定位丢失</td><td>停止探索</td><td>本体「定位异常，本次探索已终止。已探索区域数据将不会保存」+ Pudulink 通知；重新发起建图</td><td><button class="link-btn" onclick="showPage('p-explore');exploreState('running');openDialog('d-fail')">查看原型</button></td></tr>
       <tr><td><span class="ab-badge">中3</span></td><td>建图中电量不足（≤15%）</td><td>结束建图，返回初始点，正常优化并保存</td><td>Pudulink 通知 + 保存成功页提醒「可手动扩展建图」</td><td><button class="link-btn" onclick="savedVariant('lowbatt');showPage('p-saved')">查看原型</button></td></tr>
-      <tr><td><span class="ab-badge">中4</span></td><td>探索长时间无进展（超 10min 无新增可探索区域）</td><td>结束探索，返回初始点，正常优化保存</td><td>地图创建成功页，人工检查已扫区域是否满足预期</td><td><button class="link-btn" onclick="showPage('p-return')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">中4</span></td><td>探索长时间无进展（超 10min 无新增可探索区域）</td><td>结束探索，返回初始点，正常优化保存</td><td>地图创建成功页，人工检查已扫区域是否满足预期</td><td><button class="link-btn" onclick="savedVariant('normal');showPage('p-saved')">查看原型</button></td></tr>
       <tr><td><span class="ab-badge b">中5</span></td><td>建图中触发急停</td><td>急停按钮按下，立即停止移动</td><td>已有急停页面；复位后机器人处于暂停状态，点击「继续」恢复建图</td><td><button class="link-btn" onclick="showPage('p-estop')">查看原型</button></td></tr>
       <tr><td><span class="ab-badge b">中6</span></td><td>内存（存储）空间不足</td><td>本地储存空间达到上限，结束探索、返回初始点并保存</td><td>自主建图成功页 tips「该地图是因储存已满，自动返航…」+ Pudulink 通知；可删除多余地图后手动扩展建图</td><td><button class="link-btn" onclick="savedVariant('storagefull');showPage('p-saved')">查看原型</button></td></tr>
     </table>
     <div style="font-weight:700;font-size:15px;margin:16px 26px 8px;">建图后异常（返航与保存）</div>
     <table class="ab-table" style="margin-bottom:24px;">
       <tr><th style="width:56px;">编号</th><th style="width:180px;">异常场景</th><th>机器人行为</th><th>用户可见反馈与操作</th><th style="width:110px;">原型</th></tr>
-      <tr><td><span class="ab-badge">后1</span></td><td>返航路径受阻</td><td>通道被临时堵塞：停止，原地优化地图并完成建图</td><td>本体自主建图成功页 + Pudulink 通知「返航时受阻已停在原地，请前往场地内推回机器」</td><td><button class="link-btn" onclick="returnVariant('blocked');showPage('p-return')">查看原型</button></td></tr>
-      <tr><td><span class="ab-badge">后2</span></td><td>返航中定位异常</td><td>累计误差导致定位异常：停止，优化地图并完成建图</td><td>本体自主建图成功页 + Pudulink 通知「返航时定位异常已停在原地，请前往场地内推回机器」</td><td><button class="link-btn" onclick="returnVariant('locatelost');showPage('p-return')">查看原型</button></td></tr>
-      <tr><td><span class="ab-badge">后3</span></td><td>返航中电量达到最低阈值（≤5%）</td><td>停止，优化地图并完成建图</td><td>地图保存成功页 + Pudulink 通知「请前往场地内推回机器进行充电」</td><td><button class="link-btn" onclick="savedVariant('lowbatt');showPage('p-saved')">查看原型</button></td></tr>
-      <tr><td><span class="ab-badge">后4</span></td><td>地图保存失败</td><td>自动重试一次；仍失败弹出提醒</td><td>「保存失败，请再次点击保存」→ 仍失败「储存异常，请联系技术人员」</td><td><button class="link-btn" onclick="openDialog('d-savefail')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">后1</span></td><td>返航路径受阻</td><td>通道被临时堵塞：停止，原地优化地图并完成建图</td><td>本体自主建图成功页 + Pudulink 通知「返航时受阻已停在原地，请前往场地内推回机器」</td><td><button class="link-btn" onclick="savedVariant('retblocked');showPage('p-saved')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">后2</span></td><td>返航中定位异常</td><td>累计误差导致定位异常：停止，优化地图并完成建图</td><td>本体自主建图成功页 + Pudulink 通知「返航时定位异常已停在原地，请前往场地内推回机器」</td><td><button class="link-btn" onclick="savedVariant('retlocatelost');showPage('p-saved')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">后3</span></td><td>返航中电量达到最低阈值（≤5%）</td><td>停止，优化地图并完成建图</td><td>自动建图成功页 tips「自主建图已完成，机器人电量过低，请及时进行充电」</td><td><button class="link-btn" onclick="savedVariant('lowcharge');showPage('p-saved')">查看原型</button></td></tr>
+      <tr><td><span class="ab-badge">后4</span></td><td>地图保存失败</td><td>自动重试一次；仍失败弹出提醒</td><td>全局地图保存页提示「地图保存失败，请二次重试」；重试后仍失败，提醒「储存异常，请联系技术人员」</td><td><button class="link-btn" onclick="optimizeFail();showPage('p-optimize')">查看原型</button></td></tr>
     </table>
     </div>
   </div>
@@ -682,26 +690,6 @@ select.proto-btn{padding:5px 10px;}
     <div class="d-btns">
       <button class="btn btn-plain" onclick="closeDialog('d-fail')">返回建图方式</button>
       <button class="btn btn-primary" onclick="closeDialog('d-fail');showPage('p-check');">重新发起建图</button>
-    </div>
-  </div></div>
-
-  <!-- F04 异常 中2：被困脱困失败 -->
-  <div class="dialog-mask" id="d-stuck"><div class="dialog warn">
-    <button class="d-close" onclick="closeDialog('d-stuck')">✕</button>
-    <h3>机器人受阻，请协助清理障碍</h3>
-    <div class="d-body">机器人探索地图时被困，脱困失败已原地等待。<br><span class="hint">已同步在 Pudulink 通知：机器人探索地图中受阻，需协助清理障碍。</span></div>
-    <div class="d-btns">
-      <button class="btn btn-plain" onclick="closeDialog('d-stuck');openDialog('d-stuck2')">取消建图</button>
-      <button class="btn btn-primary" onclick="closeDialog('d-stuck');showToast('障碍已清理，继续执行自动建图')">继续建图</button>
-    </div>
-  </div></div>
-  <div class="dialog-mask" id="d-stuck2"><div class="dialog">
-    <button class="d-close" onclick="closeDialog('d-stuck2')">✕</button>
-    <h3>是否保存已探索区域的地图？</h3>
-    <div class="d-body" style="text-align:center;">取消建图后可选择保留已探索部分</div>
-    <div class="d-btns">
-      <button class="btn btn-plain" onclick="closeDialog('d-stuck2');showToast('不保存，返回建图起始页');showPage('p-mode')">否，不保存</button>
-      <button class="btn btn-primary" onclick="closeDialog('d-stuck2');showPage('p-optimize')">是，进入编辑地图</button>
     </div>
   </div></div>
 
@@ -768,17 +756,6 @@ select.proto-btn{padding:5px 10px;}
     </div>
   </div></div>
 
-  <!-- 异常 后5：保存失败 -->
-  <div class="dialog-mask" id="d-savefail"><div class="dialog warn">
-    <button class="d-close" onclick="closeDialog('d-savefail')">✕</button>
-    <h3>地图保存失败</h3>
-    <div class="d-body" style="text-align:center;">保存失败，请再次点击保存。<br><span class="hint">已自动重试一次；若仍失败将提示「储存异常，请联系技术人员」。</span></div>
-    <div class="d-btns">
-      <button class="btn btn-plain" onclick="closeDialog('d-savefail');showToast('储存异常，请联系技术人员')">仍失败</button>
-      <button class="btn btn-primary" onclick="closeDialog('d-savefail');showToast('保存成功')">再次保存</button>
-    </div>
-  </div></div>
-
   <!-- 初始点识别失败 -->
   <div class="dialog-mask" id="d-anchorfail"><div class="dialog warn">
     <button class="d-close" onclick="closeDialog('d-anchorfail')">✕</button>
@@ -814,9 +791,9 @@ select.proto-btn{padding:5px 10px;}
       <tr><td>9</td><td>P06 自主探索</td><td>暂停 →「结束建图」→ 选「直接编辑地图」</td><td>原地进入 P08 自动优化并保存（主动结束分支）</td><td>F04 主动结束</td></tr>
       <tr><td>10</td><td>P06 自主探索</td><td>暂停 →「结束建图」→ 选「返航至初始点」</td><td>进入 P07 返航中（与探索页同款双栏样式），路径动画回初始点</td><td>F04 返航</td></tr>
       <tr><td>11</td><td>P07→P08→P09</td><td>返航到达 → 观察自动流转</td><td>「地图优化中」→「自动建图已完成」保存成功页</td><td>F04/F06</td></tr>
-      <tr><td>12</td><td>P09 保存成功</td><td>切「因电量过低返航」「部分区域被阻挡放弃」变体</td><td>保存成功页分别叠加提醒，可手动扩展建图</td><td>F06 保存后处理</td></tr>
+      <tr><td>12</td><td>P09 保存成功</td><td>切「因电量过低返航」「部分区域被阻挡放弃」「返航受阻」等变体</td><td>保存成功页分别叠加提醒，可手动扩展建图</td><td>F06 保存后处理</td></tr>
       <tr><td>13</td><td>P09 保存成功</td><td>点「✏️ 重命名」→「暂不编辑，返回列表」</td><td>自动命名可改名；返回列表出现新地图卡片 + Pudulink 通知提示</td><td>F06</td></tr>
-      <tr><td>14</td><td>P10 异常面板</td><td>逐条点「查看原型」</td><td>建图中 8 项 + 建图后 5 项异常的原型样式闭环演示</td><td>F04 异常闭环</td></tr>
+      <tr><td>14</td><td>P10 异常面板</td><td>逐条点「查看原型」</td><td>建图中 5 项 + 建图后 4 项异常的原型样式闭环演示</td><td>F04 异常闭环</td></tr>
     </tbody>
   </table>
   <h4>📋 PRD 对齐校验报告</h4>
@@ -829,7 +806,7 @@ select.proto-btn{padding:5px 10px;}
       <tr><td>4a 自主探索闭环</td><td>自主移动扫描建图</td><td>P06（实时地图动画）</td><td>✅</td></tr>
       <tr><td>4b 暂停和恢复</td><td>探索中暂停 / 恢复</td><td>P06 状态切换（探索中/已暂停）</td><td>✅</td></tr>
       <tr><td>4c 暂停后移动继续</td><td>暂停期间被移动 → 顶部越界提示 + 继续前位置确认</td><td>P06「暂停·已移动」态：顶部提示推回可运行区域；点继续弹「请确保您在机器人可运行区域内」确认弹窗；定位丢失见中1 弹窗</td><td>✅</td></tr>
-      <tr><td>4d 异常闭环</td><td>建图中 8 项 + 建图后 5 项</td><td>P10 异常面板 + 6 个弹窗 + 急停页</td><td>✅</td></tr>
+      <tr><td>4d 异常闭环</td><td>建图中 5 项 + 建图后 4 项</td><td>P10 异常面板 + 8 个弹窗 + 急停页</td><td>✅</td></tr>
       <tr><td>4e 完成返航</td><td>探索完成自主返回初始点</td><td>P07（返航路径动画）</td><td>✅</td></tr>
       <tr><td>5 保存后处理</td><td>自动保存/命名/失败重试/通知/不自动上传/元素不自动加</td><td>P09 + P13 列表新卡片 + 通知 toast</td><td>✅</td></tr>
       <tr><td colspan="3"><b>非目标核对</b>：过程中添加禁区/虚拟墙、断点续建、扩展建图（待确认）均未实现为可操作功能，仅以置灰/提示出现</td><td>✅</td></tr>
@@ -917,16 +894,23 @@ function confirmDunwu(){
   document.getElementById('checkGo').disabled=false;
   showToast('已手动确认：将忽略勿扰限制继续自动建图');
 }
-function returnVariant(v){
-  var b=document.getElementById('retBanner');
-  var t=document.getElementById('retBannerText');
-  if(v==='blocked'){
-    t.innerHTML='⚠ <b>返航路径受阻</b>：返航时通道被临时堵塞，机器人已停在原地，地图已优化并保存。<br>Pudulink 已通知：请前往场地内推回机器。';
-  }else{
-    t.innerHTML='⚠ <b>返航中定位异常</b>：累计误差导致定位异常，机器人已停在原地，地图已优化并保存。<br>Pudulink 已通知：请前往场地内推回机器。';
-  }
-  b.style.display='block';
+/* ===== P08 全局地图保存失败态（异常 后4） ===== */
+var optFail=false;
+function optimizeFail(){
+  optFail=true;
+  document.getElementById('optSpin').style.display='none';
+  document.getElementById('optTitle').textContent='地图保存失败';
+  document.getElementById('optDesc').innerHTML='地图保存失败，请二次重试。<br>重试后仍失败，将提醒「储存异常，请联系技术人员」。';
+  document.getElementById('optBtns').style.display='flex';
 }
+function optimizeReset(){
+  optFail=false;
+  document.getElementById('optSpin').style.display='inline-block';
+  document.getElementById('optTitle').textContent='地图优化中';
+  document.getElementById('optDesc').textContent='已返回初始点，正在对本次探索地图进行优化，完成后自动保存';
+  document.getElementById('optBtns').style.display='none';
+}
+function optimizeSaveOk(){optimizeReset();showToast('保存成功');showPage('p-saved');}
 /* ===== P05 初始点识别 ===== */
 function anchorState(state,btn){
   if(btn){btn.parentElement.querySelectorAll('.state-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');}
@@ -1005,7 +989,7 @@ function setBt(el){
 /* ===== P07/P08 自动流转 ===== */
 function autoAdvance(id){
   if(id==='p-return'){setTimeout(function(){if(curPage==='p-return')showPage('p-optimize');},6000);}
-  if(id==='p-optimize'){setTimeout(function(){if(curPage==='p-optimize'){showToast('优化完成，地图已自动保存');showPage('p-saved');}},3200);}
+  if(id==='p-optimize'&&!window.optFail){setTimeout(function(){if(curPage==='p-optimize'){showToast('优化完成，地图已自动保存');showPage('p-saved');}},3200);}
 }
 /* ===== P09 保存成功变体 ===== */
 function savedVariant(v,btn){
@@ -1013,6 +997,9 @@ function savedVariant(v,btn){
   document.getElementById('svLowbatt').style.display=(v==='lowbatt')?'block':'none';
   document.getElementById('svBlocked').style.display=(v==='blocked')?'block':'none';
   document.getElementById('svStoragefull').style.display=(v==='storagefull')?'block':'none';
+  document.getElementById('svRetBlocked').style.display=(v==='retblocked')?'block':'none';
+  document.getElementById('svRetLocatelost').style.display=(v==='retlocatelost')?'block':'none';
+  document.getElementById('svLowcharge').style.display=(v==='lowcharge')?'block':'none';
 }
 function renameMap(){
   var n=prompt('修改地图名称（自动命名规则待确认，此处演示手动改名）:','自动建图_20260921_1103');
