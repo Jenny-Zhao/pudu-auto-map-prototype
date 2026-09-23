@@ -371,7 +371,6 @@ select.proto-btn{padding:5px 10px;}
       <button class="state-btn" onclick="checkState('dunwu',this)">勿扰拦截</button>
       <button class="state-btn" onclick="checkState('lowbatt',this)">电量不足</button>
       <button class="state-btn" onclick="checkState('storage',this)">存储不足</button>
-      <button class="state-btn" onclick="checkState('selftest',this)">自检异常</button>
     </div>
     <div class="card" style="width:860px;margin:14px auto 0;" id="checkList">
       <div class="check-item" data-check="batt">
@@ -387,11 +386,6 @@ select.proto-btn{padding:5px 10px;}
       <div class="check-item" data-check="storage">
         <div class="check-ico">💾</div>
         <div class="check-main"><div class="check-name">存储空间</div><div class="check-desc">地图存储空间充足（预留 15%）</div></div>
-        <div class="check-state"><span class="spin"></span></div>
-      </div>
-      <div class="check-item" data-check="selftest">
-        <div class="check-ico">📡</div>
-        <div class="check-main"><div class="check-name">自检</div><div class="check-desc">导航与传感器自检通过</div></div>
         <div class="check-state"><span class="spin"></span></div>
       </div>
     </div>
@@ -807,17 +801,6 @@ select.proto-btn{padding:5px 10px;}
     <div class="d-btns"><button class="btn btn-primary" onclick="closeDialog('d-lowbatt')">知道了</button></div>
   </div></div>
 
-  <!-- 启动校验不通过：传感器自检异常 -->
-  <div class="dialog-mask" id="d-selftest"><div class="dialog warn">
-    <button class="d-close" onclick="closeDialog('d-selftest')">✕</button>
-    <h3>传感器自检异常</h3>
-    <div class="d-body" style="text-align:center;">导航与传感器自检未通过，无法开始自动建图。<br><span class="hint">建议重启机器人后重新校验；若多次失败，请联系售后处理。</span></div>
-    <div class="d-btns">
-      <button class="btn btn-plain" onclick="closeDialog('d-selftest')">返回</button>
-      <button class="btn btn-primary" onclick="closeDialog('d-selftest');resetChecks();showToast('正在重新自检…')">重新自检</button>
-    </div>
-  </div></div>
-
   <!-- 异常 中8：存储不足 -->
   <div class="dialog-mask" id="d-storage"><div class="dialog warn">
     <button class="d-close" onclick="closeDialog('d-storage')">✕</button>
@@ -964,8 +947,8 @@ select.proto-btn{padding:5px 10px;}
     <tbody>
       <tr><td>1</td><td>P01 地图列表</td><td>点击「新建」</td><td>进入 P02 选择建图方式，新增「自动建图（NEW）」选项</td><td>F02 入口</td></tr>
       <tr><td>2</td><td>P02 选择建图方式 → P02b 选择扫图方式</td><td>选地图类型点「下一步」→ 选「自动建图」</td><td>P02 选定地图类型（激光+3D VSLAM+Marker）点「下一步」进入 P02b；P02b 手推/自动二选一，选自动 → 显示「建图时间」（默认无限制；达到所选时长将强制结束建图、返回起始点，探索区域可能不完整）→「开始自动建图」进入 P03；选手推提示走现有流程</td><td>F02</td></tr>
-      <tr><td>3</td><td>P03 启动前检查</td><td>观察自动校验</td><td>电量/状态/存储/自检逐项通过后「开始探索」亮起</td><td>F03 校验</td></tr>
-      <tr><td>4</td><td>P03 启动前检查</td><td>状态预览切「勿扰拦截」「电量不足」「存储不足」「自检异常」</td><td>勿扰：弹窗可「仍要继续建图」（确认后状态项标「勿扰中」并可继续）；电量不足：拦截并停留当前页；存储不足：弹窗提示清理地图或同步云端后重试；自检异常：弹窗提示重启后重新校验，可点「重新自检」</td><td>F03</td></tr>
+      <tr><td>3</td><td>P03 启动前检查</td><td>观察自动校验</td><td>电量/状态/存储逐项通过后「开始探索」亮起</td><td>F03 校验</td></tr>
+      <tr><td>4</td><td>P03 启动前检查</td><td>状态预览切「勿扰拦截」「电量不足」「存储不足」</td><td>勿扰：弹窗可「仍要继续建图」（确认后状态项标「勿扰中」并可继续）；电量不足：拦截并停留当前页；存储不足：弹窗提示清理地图或同步云端后重试</td><td>F03</td></tr>
       <tr><td>5</td><td>P04 现场准备提示</td><td>阅读三项准备 + 自动建图说明（图文流程）+ 初始点设定；可点「操作指引」查看禁行胶带图文指引</td><td>进入 P05 初始点识别</td><td>F03 前置说明</td></tr>
       <tr><td>6</td><td>P05 初始点识别</td><td>状态预览切「识别失败」→ 弹窗「重新识别」</td><td>失败提示重新摆放原地等待；切「识别成功」→ 出现「开始建图」按钮，手动点击后进入自动建图</td><td>F03 初始点</td></tr>
       <tr><td>7</td><td>P06 自主探索</td><td>观察双栏页面（评审后新样式）</td><td>左侧「显示地图」面板实时生长（清洁轨迹动画），右侧「自主建图中」+ 大暂停圆钮</td><td>F04 探索</td></tr>
@@ -984,7 +967,7 @@ select.proto-btn{padding:5px 10px;}
     <tbody>
       <tr><td>1 功能配置</td><td>高级设置自动建图开关 · 机型默认状态（CC1 系列、ET1 默认开启；其他机型默认关闭）</td><td>P00（设置页开关 + 机型默认状态表）</td><td>✅</td></tr>
       <tr><td>2 功能入口</td><td>建图工具内新增自动建图入口</td><td>P01→P02（方式选择并列新增）</td><td>✅</td></tr>
-      <tr><td>3 启动校验</td><td>电量≥80%/状态/存储/自检 + 前置说明 + 初始点设定（勿扰可手动确认继续）</td><td>P03（含失败态）→ P04 → P05（含失败重试）</td><td>✅</td></tr>
+      <tr><td>3 启动校验</td><td>电量≥80%/状态/存储 + 前置说明 + 初始点设定（勿扰可手动确认继续）</td><td>P03（含失败态）→ P04 → P05（含失败重试）</td><td>✅</td></tr>
       <tr><td>4a 自主探索闭环</td><td>自主移动扫描建图</td><td>P06（实时地图动画）</td><td>✅</td></tr>
       <tr><td>4b 暂停和恢复</td><td>探索中暂停 / 恢复</td><td>P06 状态切换（探索中/已暂停）</td><td>✅</td></tr>
       <tr><td>4c 暂停后移动继续</td><td>暂停期间被移动 → 顶部越界提示 + 继续前位置确认</td><td>P06「暂停·已移动」态：顶部提示推回可运行区域；点继续弹「请确保您在机器人可运行区域内」确认弹窗；定位丢失见中1 弹窗</td><td>✅</td></tr>
@@ -1027,7 +1010,7 @@ function resetChecks(){
   var list=document.querySelectorAll('#checkList .check-item');
   list.forEach(function(it){it.className='check-item';it.querySelector('.check-state').innerHTML='<span class="spin"></span>';});
   document.getElementById('checkGo').disabled=true;
-  var order=['batt','status','storage','selftest'],i=0;
+  var order=['batt','status','storage'],i=0;
   (function next(){
     if(i>=order.length){
       document.getElementById('checkGo').disabled=false;
@@ -1059,13 +1042,6 @@ function checkState(state,btn){
       var it=document.querySelector('#checkList .check-item[data-check="storage"]');
       it.classList.add('fail');it.querySelector('.check-state').textContent='不通过';
       openDialog('d-storage');
-    },1200);
-  }
-  if(state==='selftest'){
-    setTimeout(function(){
-      var it=document.querySelector('#checkList .check-item[data-check="selftest"]');
-      it.classList.add('fail');it.querySelector('.check-state').textContent='不通过';
-      openDialog('d-selftest');
     },1200);
   }
 }
