@@ -265,12 +265,15 @@ select.proto-btn{padding:5px 10px;}
       <div class="check-item" style="display:block;">
         <div class="check-name" style="font-size:14px;color:var(--text-2);margin-bottom:8px;">机型默认状态</div>
         <table style="width:100%;border-collapse:collapse;font-size:13.5px;">
-          <tr><td style="padding:7px 12px;border-top:1px solid #f0f2f5;">CC1 系列</td><td style="border-top:1px solid #f0f2f5;color:var(--success);">默认开启（v2.19.3 优先合入）</td></tr>
+          <tr style="color:var(--text-3);font-size:12.5px;"><td style="padding:7px 12px;">机型</td><td style="padding:7px 12px;">支持情况</td><td style="padding:7px 12px;">开关默认状态</td></tr>
+          <tr><td style="padding:7px 12px;border-top:1px solid #f0f2f5;">CC1 / CC1 Pro</td><td style="border-top:1px solid #f0f2f5;"><span style="display:inline-block;background:var(--success-light);color:var(--success);border-radius:999px;font-size:11.5px;padding:1px 9px;">支持</span></td><td style="border-top:1px solid #f0f2f5;color:var(--success);">默认开启</td></tr>
+          <tr><td style="padding:7px 12px;border-top:1px solid #f0f2f5;">ET1</td><td style="border-top:1px solid #f0f2f5;"><span style="display:inline-block;background:var(--success-light);color:var(--success);border-radius:999px;font-size:11.5px;padding:1px 9px;">支持</span></td><td style="border-top:1px solid #f0f2f5;color:var(--success);">默认开启</td></tr>
+          <tr><td style="padding:7px 12px;border-top:1px solid #f0f2f5;">MT1 / MT1 Vac / MT1 Max、SH1、BG1 / BG1 Pro</td><td style="border-top:1px solid #f0f2f5;"><span style="display:inline-block;background:#f0f2f5;color:var(--text-3);border-radius:999px;font-size:11.5px;padding:1px 9px;">暂不支持</span></td><td style="border-top:1px solid #f0f2f5;color:var(--text-3);">默认关闭</td></tr>
         </table>
-        <div class="hint" style="margin-top:10px;font-size:12.5px;">其他机型暂不合入该功能，不提供对应配置项</div>
+        <div class="hint" style="margin-top:10px;font-size:12.5px;">开关默认状态随机型下发：<b>CC1 系列、ET1 默认开启</b>（本页开关默认打开）；其余机型默认关闭。如需在其他机型使用，可由管理员手动开启。</div>
       </div>
     </div>
-    <p class="hint" style="text-align:center;margin-top:14px;">关闭开关后，P02 页不展示「自动建图」选项（演示原型中始终可见）</p>
+    <p class="hint" style="text-align:center;margin-top:14px;">关闭开关后，P02 页不展示「自动建图」选项（演示原型中始终可见）；开关默认状态为 CC1 系列 / ET1 打开、其他机型关闭</p>
   </div>
 
   <!-- ==================== Page: P01 建图工具·地图列表（F02 功能入口） ==================== -->
@@ -813,7 +816,7 @@ select.proto-btn{padding:5px 10px;}
     <button class="d-close" onclick="closeDialog('d-guide')">✕</button>
     <h3>禁入特征码 · 粘贴指引</h3>
     <div class="d-body">
-      <div style="font-size:14px;">在下列区域的<b>地面上粘贴禁入特征码</b>，机器人识别到该码后将不进入该区域；请在启动自动建图前完成贴码。</div>
+      <div style="font-size:14px;">在下列区域的<b>地面或墙面粘贴禁入特征码</b>（高度需在机器人可识别范围内），机器人识别到该码后将不进入该区域；请在启动自动建图前完成贴码。</div>
 
       <svg viewBox="0 0 700 186" style="width:100%;height:auto;background:#f7f9fc;border:1px solid #e6eaf1;border-radius:10px;margin-top:12px;">
         <text x="14" y="20" font-size="12" fill="#6b7280">示意图（俯视）</text>
@@ -830,15 +833,15 @@ select.proto-btn{padding:5px 10px;}
         <rect x="234" y="104" width="44" height="44" rx="8" fill="#ffffff" stroke="#ef4444" stroke-width="2"/>
         <text x="256" y="124" font-size="11" fill="#ef4444" text-anchor="middle">禁入</text>
         <text x="256" y="138" font-size="11" fill="#ef4444" text-anchor="middle">特征码</text>
-        <text x="256" y="172" font-size="11" fill="#6b7280" text-anchor="middle">贴在地面 · 正对来向</text>
+        <text x="256" y="172" font-size="11" fill="#6b7280" text-anchor="middle">贴于地面或墙面</text>
         <circle cx="452" cy="66" r="6" fill="#ef4444"/>
-        <text x="468" y="70" font-size="12" fill="#374151">禁入特征码（贴于地面）</text>
+        <text x="468" y="70" font-size="12" fill="#374151">禁入特征码（地面 / 墙面）</text>
         <line x1="444" y1="96" x2="460" y2="96" stroke="#ef4444" stroke-width="2" stroke-dasharray="6 5"/>
         <text x="468" y="100" font-size="12" fill="#374151">禁入边界</text>
         <rect x="444" y="112" width="16" height="12" rx="2" fill="#fee2e2" stroke="#fca5a5"/>
         <text x="468" y="122" font-size="12" fill="#374151">危险 / 禁入区域</text>
         <text x="444" y="146" font-size="12" fill="#6b7280">机器人识别到特征码后</text>
-        <text x="444" y="164" font-size="12" fill="#6b7280">不会跨过边界进入</text>
+        <text x="444" y="164" font-size="12" fill="#6b7280">不会跨过闭合边界进入</text>
       </svg>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;">
@@ -887,7 +890,10 @@ select.proto-btn{padding:5px 10px;}
       </div>
 
       <div style="margin-top:14px;background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:11px 14px;font-size:13px;color:#92400e;line-height:1.75;">
-        <b>贴码要点：</b>① 贴在区域入口的<b>地面上</b>，正对机器人来向；② 同一入口贴 1 张即可；③ 码面保持平整、无遮挡、无破损。
+        <b>贴码要点：</b><br>
+        1️⃣ 贴在区域入口的<b>地面或墙面</b>，高度需在机器人可识别范围内；<br>
+        2️⃣ 沿禁入区域外围边界<b>连续贴满特征码、首尾相接</b>，形成闭合边界，不得留有缺口（边界不闭合时机器人可能从缺口进入）；<br>
+        3️⃣ 码面保持平整、无遮挡、无破损。
       </div>
     </div>
     <div class="d-btns">
@@ -939,7 +945,7 @@ select.proto-btn{padding:5px 10px;}
   <table>
     <thead><tr><th>功能编号（PRD §3.1）</th><th>功能点</th><th>原型对应</th><th>状态</th></tr></thead>
     <tbody>
-      <tr><td>1 功能配置</td><td>高级设置自动建图开关 · 机型默认状态（本期仅 CC1 系列）</td><td>P00（设置页开关 + CC1 系列默认开启）</td><td>✅</td></tr>
+      <tr><td>1 功能配置</td><td>高级设置自动建图开关 · 机型默认状态（CC1 系列、ET1 默认开启；其他机型默认关闭）</td><td>P00（设置页开关 + 机型默认状态表）</td><td>✅</td></tr>
       <tr><td>2 功能入口</td><td>建图工具内新增自动建图入口</td><td>P01→P02（方式选择并列新增）</td><td>✅</td></tr>
       <tr><td>3 启动校验</td><td>电量≥80%/状态/存储/自检 + 前置说明 + 初始点设定（勿扰可手动确认继续）</td><td>P03（含失败态）→ P04 → P05（含失败重试）</td><td>✅</td></tr>
       <tr><td>4a 自主探索闭环</td><td>自主移动扫描建图</td><td>P06（实时地图动画）</td><td>✅</td></tr>
