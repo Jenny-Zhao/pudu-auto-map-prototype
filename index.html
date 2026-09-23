@@ -235,7 +235,8 @@ select.proto-btn{padding:5px 10px;}
     <option value="p-prepare">P04 现场准备提示</option>
     <option value="p-anchor">P05 初始点识别</option>
     <option value="p-explore">P06 自主建图</option>
-    <option value="p-return">P07 返航中</option>
+    <option value="p-return">P07 返航中（双栏地图样式）</option>
+    <option value="p-gostart">P07b 前往起始点（全屏箭头引导）</option>
     <option value="p-optimize">P08 地图优化中</option>
     <option value="p-saved">P09 保存成功</option>
     <option value="p-abnormal">P10 异常闭环演示面板</option>
@@ -617,6 +618,23 @@ select.proto-btn{padding:5px 10px;}
     </div>
   </div>
 
+  <!-- ==================== Page: P07b 前往起始点（真机全屏箭头引导样式） ==================== -->
+  <div class="page" id="p-gostart" style="background:#000;cursor:pointer;" onclick="gostartToggle()">
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:38px;">
+      <div style="border:1px solid #8a9099;background:#000;padding:24px 40px;">
+        <svg id="gostartChev" width="420" height="120" viewBox="0 0 420 120">
+        <path d="M16 14 L68 60 L16 106" stroke="#1f7cff" stroke-width="22" fill="none"><animate attributeName="opacity" values=".25;1;.25" dur="1.1s" begin="0s" repeatCount="indefinite"/></path>
+        <path d="M96 14 L148 60 L96 106" stroke="#1f7cff" stroke-width="22" fill="none"><animate attributeName="opacity" values=".25;1;.25" dur="1.1s" begin="0.15s" repeatCount="indefinite"/></path>
+        <path d="M176 14 L228 60 L176 106" stroke="#1f7cff" stroke-width="22" fill="none"><animate attributeName="opacity" values=".25;1;.25" dur="1.1s" begin="0.30s" repeatCount="indefinite"/></path>
+        <path d="M256 14 L308 60 L256 106" stroke="#1f7cff" stroke-width="22" fill="none"><animate attributeName="opacity" values=".25;1;.25" dur="1.1s" begin="0.45s" repeatCount="indefinite"/></path>
+        <path d="M336 14 L388 60 L336 106" stroke="#1f7cff" stroke-width="22" fill="none"><animate attributeName="opacity" values=".25;1;.25" dur="1.1s" begin="0.60s" repeatCount="indefinite"/></path>
+        </svg>
+      </div>
+      <div id="gostartTitle" style="color:#fff;font-size:62px;font-weight:800;letter-spacing:8px;">前往起始点</div>
+      <div id="gostartSub" style="color:#fff;font-size:25px;font-weight:700;">点击屏幕暂停</div>
+    </div>
+  </div>
+
   <!-- ==================== Page: P08 地图优化中（F05 完成判定→F06 保存前置） ==================== -->
   <div class="page" id="p-optimize">
     <div class="card" style="position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);padding:44px 70px;text-align:center;box-shadow:var(--shadow-md);">
@@ -754,7 +772,7 @@ select.proto-btn{padding:5px 10px;}
     <h3>结束建图</h3>
     <div class="d-body" style="text-align:center;">结束探索后，你希望：</div>
     <div class="d-btns">
-      <button class="btn btn-primary" onclick="closeDialog('d-exit');showPage('p-return')">返航至初始点<br><span style="font-size:12px;opacity:.85;">自动优化地图并保存</span></button>
+      <button class="btn btn-primary" onclick="closeDialog('d-exit');showPage('p-gostart')">返航至初始点<br><span style="font-size:12px;opacity:.85;">自动优化地图并保存</span></button>
       <button class="btn btn-plain" onclick="closeDialog('d-exit');showPage('p-optimize')">直接编辑地图<br><span style="font-size:12px;color:var(--text-3);">原地进入自动优化流程</span></button>
     </div>
   </div></div>
@@ -934,7 +952,7 @@ select.proto-btn{padding:5px 10px;}
       <tr><td>7</td><td>P06 自主探索</td><td>观察双栏页面（评审后新样式）</td><td>左侧「显示地图」面板实时生长（清洁轨迹动画），右侧「自主建图中」+ 大暂停圆钮</td><td>F04 探索</td></tr>
       <tr><td>8</td><td>P06 自主探索</td><td>点右侧大圆钮暂停 → 再点恢复；切「暂停·已移动」观察顶部提示</td><td>「已暂停」（圆钮变播放、出现「结束建图」）→ 无移动时直接恢复；有移动（越界）时暂停页顶部提示「已越过禁行线，请推回可运行区域」，点继续弹「请确保您在机器人可运行区域内」确认弹窗；地图右上角展示「已建图面积（约XXm²）」「建图时长」</td><td>F04 暂停/恢复</td></tr>
       <tr><td>9</td><td>P06 自主探索</td><td>暂停 →「结束建图」→ 选「直接编辑地图」</td><td>原地进入 P08 自动优化并保存（主动结束分支）</td><td>F04 主动结束</td></tr>
-      <tr><td>10</td><td>P06 自主探索</td><td>暂停 →「结束建图」→ 选「返航至初始点」</td><td>进入 P07 返航中（与探索页同款双栏样式），路径动画回初始点</td><td>F04 返航</td></tr>
+      <tr><td>10</td><td>P06 自主探索</td><td>暂停 →「结束建图」→ 选「返航至初始点」</td><td>进入 P07b 前往起始点（真机全屏箭头引导样式，点击屏幕暂停/继续）→ 自动进入 P08 自动优化并保存；P07 双栏返航样式保留，可从顶部下拉预览</td><td>F04 返航</td></tr>
       <tr><td>11</td><td>P07→P08→P09</td><td>返航到达 → 观察自动流转</td><td>「地图优化中」→「自动建图已完成」保存成功页</td><td>F04/F06</td></tr>
       <tr><td>12</td><td>P09 保存成功</td><td>切「因电量过低返航」「部分区域被阻挡放弃」「返航受阻」等变体</td><td>保存成功页分别叠加提醒，可手动扩展建图</td><td>F06 保存后处理</td></tr>
       <tr><td>13</td><td>P09 保存成功</td><td>点「✏️ 重命名」→「暂不编辑，返回列表」</td><td>自动命名可改名；返回列表出现新地图卡片 + Pudulink 通知提示</td><td>F06</td></tr>
@@ -1156,6 +1174,7 @@ function setBt(el){
 /* ===== P07/P08 自动流转 ===== */
 function autoAdvance(id){
   if(id==='p-return'){setTimeout(function(){if(curPage==='p-return')showPage('p-optimize');},6000);}
+  if(id==='p-gostart'){setTimeout(function(){if(curPage==='p-gostart'&&!gostartPaused)showPage('p-optimize');},6000);}
   if(id==='p-optimize'&&!window.optFail){setTimeout(function(){if(curPage==='p-optimize'){showToast('优化完成，地图已自动保存');showPage('p-saved');}},3200);}
 }
 /* ===== P09 保存成功变体 ===== */
@@ -1185,6 +1204,14 @@ function addNewMapCard(){
   grid.prepend(d);
 }
 /* ===== 弹窗 & 开关 ===== */
+var gostartPaused=false;
+function gostartToggle(){
+  var svg=document.getElementById('gostartChev');
+  var t=document.getElementById('gostartTitle'),sub=document.getElementById('gostartSub');
+  gostartPaused=!gostartPaused;
+  if(gostartPaused){svg.pauseAnimations();t.textContent='已暂停';sub.textContent='点击屏幕继续';showToast('已暂停前往起始点，点击屏幕继续');}
+  else{svg.unpauseAnimations();t.textContent='前往起始点';sub.textContent='点击屏幕暂停';}
+}
 function openDialog(id){document.getElementById(id).classList.add('open');}
 function closeDialog(id){document.getElementById(id).classList.remove('open');}
 function toggleSwitch(el){el.classList.toggle('on');showToast(el.classList.contains('on')?'自动建图已开启':'自动建图已关闭（关闭后建图方式页不展示该选项）');}
