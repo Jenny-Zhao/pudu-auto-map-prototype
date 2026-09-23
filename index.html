@@ -349,8 +349,8 @@ select.proto-btn{padding:5px 10px;}
             <span class="bt-pill" onclick="setBt(this)">8 小时</span>
             <span class="bt-pill bt-on" onclick="setBt(this)">无限制</span>
           </div>
-          <div style="margin-top:14px;background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:11px 15px;font-size:13px;color:#92400e;line-height:1.7;">⚠ <b>释义：</b>达到所选时长，机器人将<b>强制结束建图</b>，返回起始点，可能会导致探索区域不够完整，请谨慎选择。</div>
-          <div class="hint" style="margin-top:8px;font-size:12.5px;">默认「无限制」；不设时长上限，直至探索完成或触发异常 / 手动结束</div>
+          <div id="btNote" style="display:none;margin-top:14px;background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:11px 15px;font-size:13px;color:#92400e;line-height:1.7;">⚠ <b>释义：</b>该时间代表，机器人自动建图过程中，若达到所选时长，将<b>强制结束建图</b>，返回起始点，可能会导致探索区域不够完整，请谨慎选择。</div>
+          <div class="hint" style="margin-top:8px;font-size:12.5px;">默认「无限制」；选择具体时长后展示上方释义</div>
         </div>
       </div>
       <button class="btn btn-primary" id="scanNext" style="margin-top:6px;padding:14px 0;font-size:16px;" onclick="showPage('p-check')">开始自动建图 ›</button>
@@ -993,6 +993,8 @@ function selectScan(type){
     push.querySelector('span:last-child').style.color='var(--text-3)';
   }
   document.getElementById('buildTimeBlock').style.display=(type==='auto')?'block':'none';
+  if(type==='auto'){var _on=document.querySelector('#buildTimeRow .bt-pill.bt-on');
+    document.getElementById('btNote').style.display=(_on&&_on.textContent.indexOf('无限制')===-1)?'block':'none';}
   var n=document.getElementById('scanNext');
   n.style.display='block';
   if(type==='auto'){
@@ -1005,7 +1007,13 @@ function selectScan(type){
 function setBt(el){
   document.querySelectorAll('#buildTimeRow .bt-pill').forEach(function(b){b.classList.remove('bt-on');});
   el.classList.add('bt-on');
-  showToast('建图时间已设为「'+el.textContent+'」；达到该时长后自动返回初始点');
+  var unlimited=el.textContent.indexOf('无限制')>-1;
+  document.getElementById('btNote').style.display=unlimited?'none':'block';
+  if(unlimited){
+    showToast('建图时间已设为「无限制」；不设时长上限，直至探索完成或触发异常');
+  }else{
+    showToast('建图时间已设为「'+el.textContent+'」；达到该时长将强制结束建图并返回起始点');
+  }
 }
 /* ===== P07/P08 自动流转 ===== */
 function autoAdvance(id){
