@@ -229,6 +229,7 @@ select.proto-btn{padding:5px 10px;}
     <option value="p-settings">P00 高级设置 · 功能配置</option>
     <option value="p-maplist">P01 建图工具 · 地图列表</option>
     <option value="p-mode">P02 选择建图方式</option>
+    <option value="p-scantype">P02b 选择扫图方式</option>
     <option value="p-check">P03 启动前检查</option>
     <option value="p-prepare">P04 现场准备提示</option>
     <option value="p-anchor">P05 初始点识别</option>
@@ -296,12 +297,29 @@ select.proto-btn{padding:5px 10px;}
     <div style="position:absolute;left:24px;bottom:24px;width:40px;height:40px;background:#fff;border-radius:10px;box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;" onclick="showPage('p-settings')">⚙</div>
   </div>
 
-  <!-- ==================== Page: P02 选择建图方式（F02 功能入口·新增自动建图） ==================== -->
+  <!-- ==================== Page: P02 选择建图方式（对齐真机：先选地图类型） ==================== -->
   <div class="page" id="p-mode" style="overflow-y:auto;">
     <div class="navrow"><button class="backbtn" onclick="showPage('p-maplist')">‹</button><span class="page-title" style="flex:1;text-align:center;margin-right:44px;">选择建图方式</span></div>
-    <div style="width:760px;margin:60px auto 0;display:flex;flex-direction:column;gap:20px;">
-      <!-- 现有方式：手推建图（原「快速建图」改名） -->
-      <div class="card" style="padding:22px 28px;cursor:pointer;display:flex;align-items:center;gap:18px;" onclick="showToast('手推建图：走现有手推建图流程（不在本需求范围）')">
+    <div style="width:760px;margin:90px auto 0;display:flex;flex-direction:column;gap:20px;">
+      <!-- 地图类型（对齐真机，两种扫图方式通用） -->
+      <div class="card" style="padding:20px 28px;">
+        <div onclick="showToast('当前机型仅支持「激光 + 3D VSLAM + Marker」，后续机型扩展后此处可选')" style="border:2px solid var(--primary);background:rgba(22,119,255,0.06);border-radius:12px;padding:18px 22px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;">
+          <span style="font-size:17px;font-weight:600;color:var(--primary);">激光 + 3D VSLAM + Marker</span>
+          <span style="color:var(--primary);font-size:15px;">✓</span>
+        </div>
+        <div class="hint" style="margin-top:10px;font-size:12.5px;text-align:center;">激光雷达 + 3D 视觉 SLAM + 定位码 Marker 融合定位建图；如后续新增地图类型，将在此页扩展选择</div>
+      </div>
+      <button class="btn btn-primary" style="margin:30px auto 0;width:300px;padding:14px 0;font-size:17px;" onclick="showPage('p-scantype')">下一步 »</button>
+    </div>
+    <p class="hint" style="text-align:center;margin-top:40px;">「边建图边清洁」走已有「基于快速演示的无图一键清洁」方案，不在本需求范围</p>
+  </div>
+
+  <!-- ==================== Page: P02b 选择扫图方式（手推建图 / 自动建图二选一） ==================== -->
+  <div class="page" id="p-scantype" style="overflow-y:auto;">
+    <div class="navrow"><button class="backbtn" onclick="showPage('p-mode')">‹</button><span class="page-title" style="flex:1;text-align:center;margin-right:44px;">选择扫图方式</span></div>
+    <div style="width:760px;margin:36px auto 0;display:flex;flex-direction:column;gap:20px;">
+      <!-- 方式一：手推建图（现有方式） -->
+      <div class="card" id="cardPush" style="padding:22px 28px;border:2px solid #e5e7eb;cursor:pointer;display:flex;align-items:center;gap:18px;" onclick="selectScan('push')">
         <div style="font-size:34px;">🚶</div>
         <div style="flex:1;">
           <div style="font-size:19px;font-weight:600;">手推建图</div>
@@ -309,29 +327,18 @@ select.proto-btn{padding:5px 10px;}
         </div>
         <span style="color:var(--text-3);font-size:20px;">›</span>
       </div>
-      <!-- F02: 自动建图入口（新增） -->
-      <div class="card" id="cardAuto" style="padding:22px 28px;border:2px solid #e5e7eb;cursor:pointer;display:flex;align-items:center;gap:18px;" onclick="selectAuto()">
+      <!-- 方式二：自动建图（新增） -->
+      <div class="card" id="cardAuto" style="padding:22px 28px;border:2px solid var(--primary);background:rgba(22,119,255,0.04);cursor:pointer;display:flex;align-items:center;gap:18px;" onclick="selectScan('auto')">
         <div style="font-size:34px;">🤖</div>
         <div style="flex:1;">
           <div style="font-size:19px;font-weight:700;">自动建图 <span class="new-chip">NEW</span></div>
           <div class="hint" style="margin-top:4px;font-size:13.5px;">机器人自主探索完成环境扫描与建图，无需人工推行；完成后自动返回初始点<br><span style="color:#b45309;">⚠ 请注意：泳池、电梯等易跌落区，需贴完禁入区特征码后，再启动自动建图。</span></div>
         </div>
-        <span style="color:var(--text-3);font-size:20px;">›</span>
+        <span style="color:var(--primary);font-size:20px;">›</span>
       </div>
-      <!-- 地图类型（融合自真机「选择建图方式」页，两种建图方式通用） -->
-      <div style="margin-top:14px;">
-        <div class="hint" style="font-size:13px;margin-bottom:10px;text-align:left;">地图类型 <span style="color:var(--text-3);">· 自动建图 / 手推建图 通用</span></div>
-        <div class="card" style="padding:20px 28px;">
-          <div onclick="showToast('当前机型仅支持「激光 + 3D VSLAM + Marker」，后续机型扩展后此处可选')" style="border:2px solid var(--primary);background:rgba(22,119,255,0.06);border-radius:12px;padding:14px 22px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;">
-            <span style="font-size:16.5px;font-weight:600;color:var(--primary);">激光 + 3D VSLAM + Marker</span>
-            <span style="color:var(--primary);font-size:15px;">✓</span>
-          </div>
-          <div class="hint" style="margin-top:10px;font-size:12.5px;text-align:center;">激光雷达 + 3D 视觉 SLAM + 定位码 Marker 融合定位建图；如后续新增地图类型，将在此页扩展选择</div>
-        </div>
-      </div>
-      <!-- 建图时间：选中自动建图后显示；达到所选时长后自动结束探索并返回初始点 -->
-      <div id="buildTimeBlock" style="display:none;margin-top:14px;">
-        <div class="hint" style="font-size:13px;margin-bottom:10px;text-align:left;">建图时间 <span style="color:var(--text-3);">· 自动建图达到所选时长后，机器人自动返回初始点</span></div>
+      <!-- 建图时间：仅选中自动建图后显示 -->
+      <div id="buildTimeBlock" style="margin-top:8px;">
+        <div class="hint" style="font-size:13px;margin-bottom:10px;text-align:left;">建图时间 <span style="color:var(--text-3);">· 仅自动建图可配置</span></div>
         <div class="card" style="padding:20px 28px;">
           <div id="buildTimeRow" style="display:flex;flex-wrap:wrap;gap:12px;">
             <span class="bt-pill" onclick="setBt(this)">1 小时</span>
@@ -342,17 +349,17 @@ select.proto-btn{padding:5px 10px;}
             <span class="bt-pill" onclick="setBt(this)">8 小时</span>
             <span class="bt-pill bt-on" onclick="setBt(this)">无限制</span>
           </div>
-          <div class="hint" style="margin-top:12px;font-size:12.5px;">默认「无限制」；到达所选时间后自动结束探索、返回初始点并进入地图优化保存流程</div>
+          <div style="margin-top:14px;background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:11px 15px;font-size:13px;color:#92400e;line-height:1.7;">⚠ <b>释义：</b>达到所选时长，机器人将<b>强制结束建图</b>，返回起始点，可能会导致探索区域不够完整，请谨慎选择。</div>
+          <div class="hint" style="margin-top:8px;font-size:12.5px;">默认「无限制」；不设时长上限，直至探索完成或触发异常 / 手动结束</div>
         </div>
       </div>
-      <button class="btn btn-primary" id="autoNext" style="display:none;margin-top:6px;padding:14px 0;font-size:16px;" onclick="showPage('p-check')">开始自动建图 ›</button>
+      <button class="btn btn-primary" id="scanNext" style="margin-top:6px;padding:14px 0;font-size:16px;" onclick="showPage('p-check')">开始自动建图 ›</button>
     </div>
-    <p class="hint" style="text-align:center;margin-top:26px;">「边建图边清洁」走已有「基于快速演示的无图一键清洁」方案，不在本需求范围</p>
   </div>
 
   <!-- ==================== Page: P03 启动前检查（F03 启动校验） ==================== -->
   <div class="page" id="p-check">
-    <div class="navrow"><button class="backbtn" onclick="showPage('p-mode')">‹</button><span class="page-title">启动前检查</span></div>
+    <div class="navrow"><button class="backbtn" onclick="showPage('p-scantype')">‹</button><span class="page-title">启动前检查</span></div>
     <div class="state-switcher">
       <span class="lab">状态预览</span>
       <button class="state-btn active" onclick="checkState('default',this)">校验中</button>
@@ -717,11 +724,11 @@ select.proto-btn{padding:5px 10px;}
 
   <!-- 启动校验不通过：勿扰 -->
   <div class="dialog-mask" id="d-dunwu"><div class="dialog warn">
-    <button class="d-close" onclick="closeDialog('d-dunwu');showPage('p-mode')">✕</button>
+    <button class="d-close" onclick="closeDialog('d-dunwu');showPage('p-scantype')">✕</button>
     <h3>机器人处于勿扰模式</h3>
     <div class="d-body" style="text-align:center;">当前处于勿扰时间段，自动建图过程中机器人移动可能产生噪声、影响他人。<br><span class="hint">你可以取消并稍后再试，也可以手动确认继续执行自动建图。</span></div>
     <div class="d-btns">
-      <button class="btn btn-plain" onclick="closeDialog('d-dunwu');showPage('p-mode')">取消，稍后再试</button>
+      <button class="btn btn-plain" onclick="closeDialog('d-dunwu');showPage('p-scantype')">取消，稍后再试</button>
       <button class="btn btn-primary" onclick="closeDialog('d-dunwu');confirmDunwu()">仍要继续建图</button>
     </div>
   </div></div>
@@ -762,7 +769,7 @@ select.proto-btn{padding:5px 10px;}
     <h3>初始点识别失败</h3>
     <div class="d-body" style="text-align:center;">未识别到可定位的初始点，请重新摆放机器人至<b>充电桩、工作站或定位码附近</b>后重试。<br><span class="hint">机器人将保持在原地等待。</span></div>
     <div class="d-btns">
-      <button class="btn btn-plain" onclick="closeDialog('d-anchorfail');showPage('p-mode')">返回</button>
+      <button class="btn btn-plain" onclick="closeDialog('d-anchorfail');showPage('p-scantype')">返回</button>
       <button class="btn btn-primary" onclick="closeDialog('d-anchorfail');anchorState('scanning')">重新识别</button>
     </div>
   </div></div>
@@ -781,7 +788,7 @@ select.proto-btn{padding:5px 10px;}
     <thead><tr><th style="width:44px;">步骤</th><th style="width:170px;">页面</th><th>操作</th><th>预期效果</th><th style="width:90px;">验证功能</th></tr></thead>
     <tbody>
       <tr><td>1</td><td>P01 地图列表</td><td>点击「新建」</td><td>进入 P02 选择建图方式，新增「自动建图（NEW）」选项</td><td>F02 入口</td></tr>
-      <tr><td>2</td><td>P02 选择建图方式</td><td>点击「自动建图」</td><td>点「自动建图」卡片选中 → 显示「建图时间」（默认无限制，到时自动返航）与「开始自动建图」按钮 → 点击进入 P03；手推建图点击提示走现有流程</td><td>F02</td></tr>
+      <tr><td>2</td><td>P02 选择建图方式 → P02b 选择扫图方式</td><td>选地图类型点「下一步」→ 选「自动建图」</td><td>P02 选定地图类型（激光+3D VSLAM+Marker）点「下一步」进入 P02b；P02b 手推/自动二选一，选自动 → 显示「建图时间」（默认无限制；达到所选时长将强制结束建图、返回起始点，探索区域可能不完整）→「开始自动建图」进入 P03；选手推提示走现有流程</td><td>F02</td></tr>
       <tr><td>3</td><td>P03 启动前检查</td><td>观察自动校验</td><td>电量/状态/存储/自检逐项通过后「开始探索」亮起</td><td>F03 校验</td></tr>
       <tr><td>4</td><td>P03 启动前检查</td><td>状态预览切「勿扰拦截」「电量不足」「存储不足」「自检异常」</td><td>勿扰：弹窗可「仍要继续建图」（确认后状态项标「勿扰中」并可继续）；电量不足：拦截并停留当前页；存储不足：弹窗提示清理地图或同步云端后重试；自检异常：弹窗提示重启后重新校验，可点「重新自检」</td><td>F03</td></tr>
       <tr><td>5</td><td>P04 现场准备提示</td><td>阅读三项准备 + 初始点设定说明，点「开始识别」</td><td>进入 P05 初始点识别</td><td>F03 前置说明</td></tr>
@@ -972,14 +979,28 @@ function exploreToggle(){
     exploreState('paused');
   }
 }
-function selectAuto(){
-  var c=document.getElementById('cardAuto');
-  c.style.border='2px solid var(--primary)';
-  c.style.background='rgba(22,119,255,0.04)';
-  c.querySelector('span:last-child').style.color='var(--primary)';
-  document.getElementById('buildTimeBlock').style.display='block';
-  document.getElementById('autoNext').style.display='block';
-  showToast('已选择自动建图，请设置建图时间（默认无限制）');
+function selectScan(type){
+  var push=document.getElementById('cardPush'),auto=document.getElementById('cardAuto');
+  if(type==='push'){
+    push.style.border='2px solid var(--primary)';push.style.background='rgba(22,119,255,0.04)';
+    push.querySelector('span:last-child').style.color='var(--primary)';
+    auto.style.border='2px solid #e5e7eb';auto.style.background='#fff';
+    auto.querySelector('span:last-child').style.color='var(--text-3)';
+  }else{
+    auto.style.border='2px solid var(--primary)';auto.style.background='rgba(22,119,255,0.04)';
+    auto.querySelector('span:last-child').style.color='var(--primary)';
+    push.style.border='2px solid #e5e7eb';push.style.background='#fff';
+    push.querySelector('span:last-child').style.color='var(--text-3)';
+  }
+  document.getElementById('buildTimeBlock').style.display=(type==='auto')?'block':'none';
+  var n=document.getElementById('scanNext');
+  n.style.display='block';
+  if(type==='auto'){
+    n.textContent='开始自动建图 ›';n.onclick=function(){showPage('p-check');};
+    showToast('已选择自动建图，请设置建图时间（默认无限制）');
+  }else{
+    n.textContent='开始手推建图 ›';n.onclick=function(){showToast('手推建图：走现有手推建图流程（不在本需求范围）');};
+  }
 }
 function setBt(el){
   document.querySelectorAll('#buildTimeRow .bt-pill').forEach(function(b){b.classList.remove('bt-on');});
