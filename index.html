@@ -703,6 +703,8 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
 .mp-rst{margin-top:8px;margin-left:12px;border:1px dashed var(--line);background:#fff;color:var(--sub);font-size:16px;font-family:inherit;padding:4px 14px;border-radius:999px;cursor:pointer}
 .mp-rst:hover{border-color:var(--blue);color:var(--blue)}
 .mp-md .tagc{font-size:14px;margin-left:8px;background:#EEF1F5;color:var(--sub);border-radius:999px;padding:1px 8px;font-weight:400}
+.sm-scene{font-size:20px;color:var(--text);line-height:1.5;padding:8px 0}
+.sm-scene.hl{color:var(--blue);font-weight:600}
 </style>
 </head>
 <body>
@@ -1080,17 +1082,40 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
           <div class="sel-wrap mp-sel"><select id="mpScenes" onchange="mpPickScene(this.value)"></select></div>
           <div class="mp-scdef" id="mpSceneDef"></div>
         </div>
-        <div class="mp-row">
-          <div class="mp-lab">场景 AI 模型</div>
-          <div>
-            <div class="mp-models" id="mpModels"></div>
-            <div class="mp-auto" id="mpAuto">模型在创建地图时按场景默认匹配，可手动切换</div>
-            <button class="mp-rst" id="mpRst" onclick="mpResetModel()" style="display:none">恢复为场景默认模型</button>
-          </div>
-        </div>      </div>
+      </div>
       <div class="mp-ft">
         <button class="mp-btn sec" onclick="mapEditClose()">取消</button>
         <button class="mp-btn pri" onclick="mapEditSave()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 场景 AI 模型（地图列表页 · ··· 菜单独立入口） -->
+  <div class="mp-ovl" id="smOvl">
+    <div class="mp-modal">
+      <div class="mp-hd">场景 AI 模型</div>
+      <div class="mp-hint">决定该地图的 AI 识别与算法策略所用模型。默认随场景自动匹配，也可手动指定为其他模型；手动指定后与场景解耦，之后切换场景不再跟随。</div>
+      <div class="mp-bd">
+        <div class="mp-row">
+          <div class="mp-lab">所属场景</div>
+          <div class="sm-scene" id="smScene"></div>
+        </div>
+        <div class="mp-row">
+          <div class="mp-lab">场景默认模型</div>
+          <div class="sm-scene" id="smDef"></div>
+        </div>
+        <div class="mp-row">
+          <div class="mp-lab">场景 AI 模型</div>
+          <div>
+            <div class="mp-models" id="smModels"></div>
+            <div class="mp-auto" id="smAuto"></div>
+            <button class="mp-rst" id="smRst" onclick="smReset()" style="display:none">恢复为场景默认模型</button>
+          </div>
+        </div>
+      </div>
+      <div class="mp-ft">
+        <button class="mp-btn sec" onclick="smClose()">取消</button>
+        <button class="mp-btn pri" onclick="smSave()">保存</button>
       </div>
     </div>
   </div>
@@ -16826,7 +16851,7 @@ function renderPushPins(){
   <button data-go="p_edit2">⑧ 元素编辑</button>
   <button data-go="p_save">⑨ 生成保存</button>
 </div>
-<div class="caption">建图 2.0 · 需求版 —— 「AI 实时识别」：推图过程中由 RGB 实时识别挡车器 / 减速带 / 地垫（识别过程不面向用户呈现），结果在元素编辑页「AI识别」中查看，支持单个确认、删除、编辑边缘轮廓（拖顶点 / 边线插点）与一键全部确认，确认后自动转化为地图元素（挡车器→禁区、减速带→汽车减速带、地垫→地毯区）并落入元素编辑页；建图信息页场景行新增匹配说明注释；元素编辑页完整复用 robot-map-v7 编辑器交互（原「旧版元素编辑页」已移除）；保存/上传链路升级：保存时校验「跌落风险区」是否绘制（未绘制弹二次风险确认，可去设置或跳过），保存过程支持后台保存（结果全局弹窗提醒），保存成功停留当前页手动选择是否上传；上传支持后台异步（不阻塞操作），结果全局弹窗提醒且地图列表属性可查看，上传失败支持断点续传（地图列表卡片「继续上传」）；地图列表页支持对地图基础属性（名称/楼层/场景）二次编辑，地图属性弹窗可查看并可跳转编辑；地图文件操作：名称/楼层/场景二次编辑、场景切换（地库切出时二次强提醒）、场景枚举 12 项、AI 场景模型枚举 6 项；场景 AI 模型（创建时按场景静默默认匹配、建图信息页不再展示该字段，仅可在地图列表「编辑基础属性」中查看与手动指定为其他场景模型，指定后与场景解耦）；属性编辑弹窗场景改为下拉选择、弹窗超高时正文滚动且底部按钮常驻；按名称模糊搜索、排序（默认最新创建/楼层由低到高/自定义排序——卡片手动拖拉拽或 ↑↓ 微调，拖拽落点按目标卡片上/下半部插入其前/后）、定位数据优化（本地定位数据保存 7 天，7 天内可再次手推建图，新增区域取并集），卡片「···」汇聚编辑/属性/复制地图/定位数据优化/上传/删除 Marker/删除地图；元素编辑页新增「编辑自动保存」状态条（随操作即时增量存档，右上角显示保存中/已自动保存时刻）；保存校验按 PRD 顺序执行：必填元素 → 跌落风险区 → 路径可达性 → 防串货（前三项阻塞并给出「去绘制/去调整」，右上角可切换校验演示态）；保存中支持「取消保存」（二次确认，可继续保存从中止进度续跑）；上传内容仅地图文件、不含定位数据（本地保留 7 天）；⑧ 元素编辑页已整体替换为 robot-map-v7 v16 编辑器：元素栏新增停车场/自倾倒工作站/声光警示区/玻璃区/地毯区/汽车减速带/围挡区/应急停靠区等，工具栏新增编辑贴边路径（零贴边/外扩零贴边）、禁区+虚拟墙合并工具、显示图层控制（增强地图/AI识别图层/RGBD图层不透明度、单位公制/英制切换、地图旋转）、元素异常检测与可达性预览、AI 识别候选轮廓编辑工具条，场景枚举与父页对齐为 12 项；「建图数据优化」文案统一为「定位数据优化」；手推扫图页需先开启「打点」模式方可打点，打点仅支持机器人当前点位或 FOV 扇形区域内；地图列表与 ⑧ 元素编辑页「编辑地图信息」切换场景校验（非地库切换及切入地库直接完成；地库切出二次强提醒，确认后才执行切换）；⑤ 添加初始点页新增「补光灯」手动开关入口（默认关闭，开启后提升低照度环境识别成功率）</div>
+<div class="caption">建图 2.0 · 需求版 —— 「AI 实时识别」：推图过程中由 RGB 实时识别挡车器 / 减速带 / 地垫（识别过程不面向用户呈现），结果在元素编辑页「AI识别」中查看，支持单个确认、删除、编辑边缘轮廓（拖顶点 / 边线插点）与一键全部确认，确认后自动转化为地图元素（挡车器→禁区、减速带→汽车减速带、地垫→地毯区）并落入元素编辑页；建图信息页场景行新增匹配说明注释；元素编辑页完整复用 robot-map-v7 编辑器交互（原「旧版元素编辑页」已移除）；保存/上传链路升级：保存时校验「跌落风险区」是否绘制（未绘制弹二次风险确认，可去设置或跳过），保存过程支持后台保存（结果全局弹窗提醒），保存成功停留当前页手动选择是否上传；上传支持后台异步（不阻塞操作），结果全局弹窗提醒且地图列表属性可查看，上传失败支持断点续传（地图列表卡片「继续上传」）；地图列表页支持对地图基础属性（名称/楼层/场景）二次编辑，地图属性弹窗可查看并可跳转编辑；地图文件操作：名称/楼层/场景二次编辑、场景切换（地库切出时二次强提醒）、场景枚举 12 项、AI 场景模型枚举 6 项；场景 AI 模型（创建时按场景静默默认匹配、建图信息页不展示该字段；已独立为地图列表「···」菜单的单独入口「场景 AI 模型」，可手动指定为其他模型，指定后与场景解耦、切场景不再跟随）；属性编辑弹窗场景改为下拉选择、弹窗超高时正文滚动且底部按钮常驻；按名称模糊搜索、排序（默认最新创建/楼层由低到高/自定义排序——卡片手动拖拉拽或 ↑↓ 微调，拖拽落点按目标卡片上/下半部插入其前/后）、定位数据优化（本地定位数据保存 7 天，7 天内可再次手推建图，新增区域取并集），卡片「···」汇聚编辑/属性/复制地图/定位数据优化/上传/删除 Marker/删除地图；元素编辑页新增「编辑自动保存」状态条（随操作即时增量存档，右上角显示保存中/已自动保存时刻）；保存校验按 PRD 顺序执行：必填元素 → 跌落风险区 → 路径可达性 → 防串货（前三项阻塞并给出「去绘制/去调整」，右上角可切换校验演示态）；保存中支持「取消保存」（二次确认，可继续保存从中止进度续跑）；上传内容仅地图文件、不含定位数据（本地保留 7 天）；⑧ 元素编辑页已整体替换为 robot-map-v7 v16 编辑器：元素栏新增停车场/自倾倒工作站/声光警示区/玻璃区/地毯区/汽车减速带/围挡区/应急停靠区等，工具栏新增编辑贴边路径（零贴边/外扩零贴边）、禁区+虚拟墙合并工具、显示图层控制（增强地图/AI识别图层/RGBD图层不透明度、单位公制/英制切换、地图旋转）、元素异常检测与可达性预览、AI 识别候选轮廓编辑工具条，场景枚举与父页对齐为 12 项；「建图数据优化」文案统一为「定位数据优化」；手推扫图页需先开启「打点」模式方可打点，打点仅支持机器人当前点位或 FOV 扇形区域内；地图列表与 ⑧ 元素编辑页「编辑地图信息」切换场景校验（非地库切换及切入地库直接完成；地库切出二次强提醒，确认后才执行切换）；⑤ 添加初始点页新增「补光灯」手动开关入口（默认关闭，开启后提升低照度环境识别成功率）；场景 AI 模型从「编辑基础属性」中拆出，改为地图操作菜单独立入口（显示当前模型，可手动切换/恢复场景默认）</div>
 
 <script>
 /* ================= 元素定义（四大分类） ================= */
@@ -17078,6 +17103,7 @@ function mapMenu(id){
   var mkOn=(c.tp||'').indexOf('Marker')>=0;
   document.getElementById('mmBody').innerHTML=
      '<button class="mm-it" onclick="mmEdit()"><span class="ic">✎</span>编辑基础属性（名称 / 楼层 / 场景）</button>'
+    +'<button class="mm-it" onclick="mmSceneModel()"><span class="ic">◈</span>场景 AI 模型（当前：'+curModel(c)+'）</button>'
     +'<button class="mm-it" onclick="mmProps()"><span class="ic">ⓘ</span>地图属性</button>'
     +'<button class="mm-it" onclick="mmCopy()"><span class="ic">⧉</span>复制地图</button>'
     +odItem+upItem
@@ -17087,6 +17113,7 @@ function mapMenu(id){
   document.getElementById('mmOvl').classList.add('on');
 }
 function mmEdit(){var t=mmId;mmClose();mapEditOpen(t)}
+function mmSceneModel(){var t=mmId;mmClose();sceneModelOpen(t)}
 function mmProps(){var t=mmId;mmClose();mapProps(t)}
 function mmUpload(){var t=mmId;mmClose();curMapId=t;startUpload(true);toast('已开始后台上传，不阻塞其他操作')}
 function mmResume(){var t=mmId;mmClose();resumeUpload(t)}
@@ -17128,20 +17155,17 @@ function mmDelMarkerOk(){
   c.tp=(c.tp||'').replace(/\s*\+\s*Marker/,'').replace(/Marker\s*\+\s*/,'')||'激光 + VSLAM';
   renderCards();toast('已删除「'+c.nm+'」的 Marker 定位标记，地图文件保留');
 }
-/* ---- 地图基础属性二次编辑：名称 / 楼层 / 场景 / 场景 AI 模型 ----
-   规则：AI 模型在「创建地图」时按场景默认匹配；建图完成后可手动改为任意模型，
-        手动指定后 aiManual=true，与场景解耦，再切场景不再自动跟随。
-        注意：本弹窗内的模型选择只是「暂存」，点保存才生效（与名称/楼层一致）。*/
-var mpIdx=-1,mpScene='',mpModel='',mpManual=false,mpPend=null;
+/* ---- 地图基础属性二次编辑：名称 / 楼层 / 场景 ----
+   说明：「场景 AI 模型」已独立为 ··· 菜单的单独入口（sceneModelOpen / sm*），
+        此处不再承载模型选择；场景变化时若未手动指定模型，模型随新场景自动匹配。*/
+var mpIdx=-1,mpScene='',mpPend=null;
 function mapEditOpen(id){
   var i=mIdx(id);if(i<0)return;var c=listCards[i];
   mpIdx=id;
   mpScene=c.scene||SCENES[0];
-  mpManual=!!c.aiManual;
-  mpModel=c.ai||sceneModel(mpScene);
   document.getElementById('mpName').value=c.nm;
   document.getElementById('mpFloor').value=parseInt((c.floor||'1').replace(/[^\-0-9]/g,''),10)||1;
-  mpRenderScenes();mpRenderModels();
+  mpRenderScenes();
   document.getElementById('mpOvl').classList.add('on');
 }
 function mapEditClose(){document.getElementById('mpOvl').classList.remove('on')}
@@ -17153,42 +17177,64 @@ function mpRenderScenes(){
   }).join('');
   sel.value=mpScene;
   var def=document.getElementById('mpSceneDef');
-  if(def)def.textContent='该场景默认模型：'+sceneModel(mpScene)+'（可在下方切换）';
+  if(def)def.textContent='该场景默认模型：'+sceneModel(mpScene)+'（可在「场景 AI 模型」菜单中修改）';
 }
-/* 全部场景模型（6 项枚举）+ 当前已手动指定的模型若不在列表内则追加 */
-function mpRenderModels(){
-  var def=sceneModel(mpScene),opts=[];
+/* 场景切换（本弹窗内仅影响提示文案，模型由 mpApply 决定是否跟随） */
+function mpPickScene(s){
+  mpScene=s;
+  mpRenderScenes();
+}
+/* ---- 场景 AI 模型（独立入口） ---- */
+var smIdx=-1,smScene='',smModel='',smManual=false;
+function sceneModelOpen(id){
+  var i=mIdx(id);if(i<0)return;var c=listCards[i];
+  smIdx=id;
+  smScene=c.scene||SCENES[0];
+  smModel=c.ai||sceneModel(smScene);
+  smManual=!!c.aiManual;
+  smRender();
+  document.getElementById('smOvl').classList.add('on');
+}
+function smClose(){document.getElementById('smOvl').classList.remove('on')}
+function smRender(){
+  var def=sceneModel(smScene),opts=[];
+  document.getElementById('smScene').textContent=smScene;
+  document.getElementById('smDef').textContent=def;
   SCENES.forEach(function(s){var m=sceneModel(s);if(opts.indexOf(m)<0)opts.push(m)});
   if(opts.indexOf(MODEL_BASE)<0)opts.push(MODEL_BASE);
-  if(opts.indexOf(mpModel)<0)opts.push(mpModel);
-  document.getElementById('mpModels').innerHTML=opts.map(function(m){
-    return '<button class="mp-md'+(m===mpModel?' sel':'')+'" onclick="mpPickModel(\''+m+'\')">'+m
+  if(opts.indexOf(smModel)<0)opts.push(smModel);
+  document.getElementById('smModels').innerHTML=opts.map(function(m){
+    return '<button class="mp-md'+(m===smModel?' sel':'')+'" onclick="smPick(\''+m+'\')">'+m
       +(m===def?'<span class="rec">推荐</span>':'')
-      +(m!==def&&mpManual&&m===mpModel?'<span class="tagc">已手动指定</span>':'')+'</button>';
+      +(m!==def&&smManual&&m===smModel?'<span class="tagc">已手动指定</span>':'')+'</button>';
   }).join('');
-  var el=document.getElementById('mpAuto'),rst=document.getElementById('mpRst');
-  if(mpManual){
-    el.textContent='当前：已手动指定为「'+mpModel+'」，与场景解耦，切换场景不影响该模型';
+  var el=document.getElementById('smAuto'),rst=document.getElementById('smRst');
+  if(smManual){
+    el.textContent='当前：已手动指定为「'+smModel+'」，与场景解耦，切换场景不影响该模型';
     el.classList.add('manual');rst.style.display='inline-block';
   }else{
-    el.textContent='当前：创建时按场景「'+mpScene+'」默认匹配，点击其他模型可手动指定';
+    el.textContent='当前：按场景「'+smScene+'」自动匹配「'+def+'」，点击其他模型可手动指定';
     el.classList.remove('manual');rst.style.display='none';
   }
 }
-/* 切换场景：仅在「未手动指定」时跟随场景默认模型 */
-function mpPickScene(s){
-  mpScene=s;
-  if(!mpManual)mpModel=sceneModel(s);
-  mpRenderScenes();mpRenderModels();
+function smPick(m){
+  smModel=m;
+  smManual=(m!==sceneModel(smScene));   /* 手动选回场景默认模型 = 恢复自动匹配 */
+  smRender();
 }
-function mpPickModel(m){
-  mpModel=m;
-  mpManual=(m!==sceneModel(mpScene));   /* 手动选回场景默认模型 = 恢复自动匹配 */
-  mpRenderModels();
+function smReset(){
+  smManual=false;smModel=sceneModel(smScene);smRender();
 }
-/* 一键恢复为当前场景的默认模型（解除手动指定） */
-function mpResetModel(){
-  mpManual=false;mpModel=sceneModel(mpScene);mpRenderModels();
+function smSave(){
+  var i=mIdx(smIdx);if(i<0)return smClose();
+  var c=listCards[i];
+  var changed=(c.ai!==smModel)||(!!c.aiManual!==smManual);
+  c.ai=smModel;c.aiManual=smManual;
+  smClose();renderCards();
+  if(!changed){toast('场景 AI 模型未变更');return}
+  toast(smManual
+    ?'已将场景 AI 模型手动指定为「'+smModel+'」，与场景解耦 ✓'
+    :'场景 AI 模型已恢复为「'+smModel+'」，跟随场景自动匹配 ✓');
 }
 function mpStep(n){
   var el=document.getElementById('mpFloor');
@@ -17204,7 +17250,7 @@ function mapEditSave(){
   var fl=parseInt(document.getElementById('mpFloor').value,10);
   if(isNaN(fl)){toast('请输入有效楼层');return}
   var old=c.scene||SCENES[0];
-  mpPend={id:mpIdx,nm:n,floor:fl+' 楼',scene:mpScene,ai:mpModel,aiManual:mpManual,old:old};
+  mpPend={id:mpIdx,nm:n,floor:fl+' 楼',scene:mpScene,old:old};
   /* 地库 → 其他场景：二次强提醒（PRD 地图场景规则 c） */
   if(old.indexOf('地库')===0&&mpScene.indexOf('地库')!==0){
     document.getElementById('mpOvl').classList.remove('on');
@@ -17218,14 +17264,16 @@ function mpApply(){
   if(!mpPend)return;var p=mpPend;mpPend=null;
   var i=mIdx(p.id);if(i<0)return;var c=listCards[i];
   var scChanged=(c.scene&&c.scene!==p.scene);
-  var aiChanged=(c.ai&&c.ai!==p.ai)||(!!c.aiManual!==!!p.aiManual);
-  c.nm=p.nm;c.floor=p.floor;c.scene=p.scene;c.ai=p.ai;c.aiManual=!!p.aiManual;
+  var manual=!!c.aiManual;
+  c.nm=p.nm;c.floor=p.floor;c.scene=p.scene;
+  c.aiManual=manual;   /* 规范化布尔（历史卡片可能为 undefined） */
+  /* 未手动指定模型时，模型随新场景自动匹配；手动指定过则保持不变 */
+  if(!manual)c.ai=sceneModel(p.scene);
   mapEditClose();renderCards();
   var msg='地图基础属性已更新 ✓';
   if((p.old||'').indexOf('地库')===0&&p.scene.indexOf('地库')!==0)msg='已切换场景，地库相关元素数据已删除，请检查地图元素 ✓';
-  else if(p.aiManual&&aiChanged)msg='已更新，AI 模型手动指定为「'+p.ai+'」，与场景解耦 ✓';
-  else if(scChanged&&!p.aiManual)msg='地图基础属性已更新，场景与 AI 模型已按新场景匹配 ✓';
-  else if(scChanged)msg='地图基础属性已更新，场景已切换，AI 模型保持手动指定 ✓';
+  else if(scChanged&&!manual)msg='地图基础属性已更新，场景与 AI 模型已按新场景匹配 ✓';
+  else if(scChanged&&manual)msg='地图基础属性已更新，场景已切换，AI 模型保持手动指定 ✓';
   toast(msg);
 }
 function openEditFromList(id){go('p_edit2')}
