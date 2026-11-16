@@ -395,7 +395,14 @@
   .lp-name { flex:1; font-size:12.5px; }
   .lp-badge { font-size:9.5px; padding:1px 5px; border-radius:3px; background:#f2f4f7; color:var(--text-3); }
   .lp-badge.def { background:#fff5e6; color:#d46b08; }
-  .lp-sub { padding:0 8px 6px 31px; }
+  .lp-sub { padding:0 8px 6px 31px; display:none; }
+  .lp-sub.show { display:block; }
+  .lp-op-toggle { width:22px; height:22px; flex:0 0 22px; display:flex; align-items:center; justify-content:center;
+    color:var(--text-3); cursor:pointer; border-radius:4px; margin-right:-4px; }
+  .lp-op-toggle:hover { background:#eef1f4; }
+  .lp-op-toggle svg { width:11px; height:11px; fill:none; stroke:currentColor; stroke-width:2.4;
+    stroke-linecap:round; stroke-linejoin:round; transition:transform .15s ease; }
+  .lp-op-toggle.open svg { transform:rotate(180deg); }
   .ai-sec { display:flex; align-items:center; gap:6px; padding:10px 2px 6px; font-size:12.5px; font-weight:600; }
   .ai-sec-badge { font-size:10.5px; background:#f2f4f7; color:#8a9099; border-radius:8px; padding:1px 7px; font-weight:500; }
   .ai-all { margin-left:auto; font-size:12px; font-weight:400; color:#5a6472; cursor:pointer; display:flex; align-items:center; gap:4px; }
@@ -2564,13 +2571,15 @@ function renderLayers() {
       const lock = !!l.lock;              // lock:true = 默认图层恒开；lock:'off' = 恒关且不可点击
       const lockOff = l.lock === 'off';
       const on = lockOff ? false : S.layers[l.k];
+      const hasOp = l.opacity !== undefined;   /* 沿用建图 2.0 交互：行右侧箭头展开/收起不透明度面板 */
       html += `<div class="lp-item ${lock ? 'lock' : ''}" data-layer="${l.k}"${lock ? ` title="${lockOff ? '该图层仅机器端可用，不可开启' : '默认图层，不可关闭'}"` : ''}>
         <span class="lp-chk ${on ? 'on' : ''} ${lock ? 'lk' : ''}">${on ? '✓' : ''}</span>
         <span class="lp-name">${l.n}</span>
         ${l.badge ? `<span class="lp-badge ${l.badge === '默认开' || l.badge === '默认图层' ? 'def' : ''}">${l.badge}</span>` : ''}
+        ${hasOp ? `<span class="lp-op-toggle ${l.opOpen ? 'open' : ''}" data-op-t="${l.k}" title="不透明度"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span>` : ''}
       </div>`;
-      if ((l.k === 'bev' || l.k === 'llm') && on) {
-        html += `<div class="lp-sub"><div class="lp-op">不透明度
+      if (hasOp) {
+        html += `<div class="lp-sub ${l.opOpen && on ? 'show' : ''}"><div class="lp-op">不透明度
           <input type="range" min="20" max="100" value="${Math.round(l.opacity*100)}" data-op="${l.k}"/>
           <span style="width:30px;text-align:right">${Math.round(l.opacity*100)}%</span></div></div>`;
       }
@@ -2582,7 +2591,8 @@ function renderLayers() {
   body.innerHTML = html;
 
   body.querySelectorAll('.lp-item[data-layer]').forEach(it => {
-    it.onclick = () => {
+    it.onclick = e => {
+      if (e.target.closest('.lp-op-toggle')) return;   // 箭头点击不切换图层显隐
       const k = it.dataset.layer;
       const def = LAYERS.find(l => l.k === k);
       if (def && def.lock) {
@@ -2590,7 +2600,16 @@ function renderLayers() {
         return;
       }
       S.layers[k] = !S.layers[k];
+      if (!S.layers[k] && def) def.opOpen = false;   // 图层关闭时收起不透明度面板
       renderLayers(); draw(); updateLegend();
+    };
+  });
+  body.querySelectorAll('.lp-op-toggle').forEach(t => {
+    t.onclick = e => {
+      e.stopPropagation();
+      const l = LAYERS.find(x => x.k === t.dataset.opT);
+      l.opOpen = !l.opOpen;
+      renderLayers();
     };
   });
   body.querySelectorAll('[data-op]').forEach(inp => {
