@@ -283,7 +283,7 @@
   .name-input:focus { outline:none; border-color:var(--blue); background:#fff; }
   .pill { display:flex; align-items:center; gap:5px; height:28px; padding:0 8px; border-radius:6px; background:#f5f6f8; }
   .pill .lab { font-size:11px; color:var(--text-3); }
-  .pill select { border:none; background:transparent; font-size:12.5px; color:var(--text); cursor:pointer; outline:none; max-width:150px; }
+  .pill .pill-val { font-size:12.5px; color:var(--text); max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .save-state { margin-left:auto; display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-3); }
   .save-state .dot { width:6px; height:6px; border-radius:50%; background:var(--green); }
   .save-state.saving .dot { background:#faad14; }
@@ -758,23 +758,10 @@
       <div class="back" id="btnBack" title="返回地图列表">‹</div>
       <input class="name-input" id="mapName" value="1#P4PuiStore · B1"/>
       <div class="pill"><span class="lab">楼层</span>
-        <select id="mapFloor"><option>B1</option><option>1F</option><option>2F</option><option>3F</option></select>
+        <span class="pill-val" id="mapFloorTxt" title="如需修改，请进入「地图属性」">B1</span>
       </div>
       <div class="pill"><span class="lab">场景</span>
-        <select id="mapScene">
-          <option value="retail">零售商超</option>
-          <option value="parking" selected>地库（室内停车场）</option>
-          <option value="industry">工业</option>
-          <option value="warehouse">仓储物流</option>
-          <option value="community">社区物业</option>
-          <option value="outdoor">户外</option>
-          <option value="hub">交通枢纽</option>
-          <option value="hotel">酒店</option>
-          <option value="sports">文娱体育</option>
-          <option value="edu">教育</option>
-          <option value="medical">医疗场所</option>
-          <option value="other">其他</option>
-        </select>
+        <span class="pill-val" id="mapSceneTxt" title="如需修改，请进入「地图属性」">地库（室内停车场）</span>
       </div>
       <div class="save-state" id="saveStateWrap"><span class="dot"></span><span id="saveState">已自动保存 17:59</span></div>
       <div class="top-acts">
@@ -1053,7 +1040,7 @@ const MACH = {
 /* ---------- 图层 ---------- */
 const LAYERS = [
   /* RGBD 为默认图层：恒排第一位、不可勾选关闭 */
-  {k:'rgbd',   n:'RGBD 图层',     on:true,  sec:'建图采集层', badge:'默认图层', lock:true},
+  {k:'rgbd',   n:'静态图层',     on:true,  sec:'建图采集层', badge:'默认图层', lock:true},
   {k:'grid',   n:'背景网格',      on:true,  sec:'建图采集层'},
   {k:'poi',    n:'标注点位',      on:true,  sec:'建图采集层', badge:'默认开'},
   /* 推行轨迹与自动建图轨迹合并为一个图层 */
@@ -2599,7 +2586,7 @@ function renderLayers() {
       const k = it.dataset.layer;
       const def = LAYERS.find(l => l.k === k);
       if (def && def.lock) {
-        toast(def.lock === 'off' ? '「实时障碍物」为机器端实时数据，PC 建图工具不可开启' : 'RGBD 为默认图层，不可关闭', true);
+        toast(def.lock === 'off' ? '「实时障碍物」为机器端实时数据，PC 建图工具不可开启' : '静态图层为默认图层，不可关闭', true);
         return;
       }
       S.layers[k] = !S.layers[k];
@@ -3834,6 +3821,10 @@ const SCENES = [
   { v: 'other',     n: '其他',                                sn: '其他', m: '通用模型' },
 ];
 const sceneDefaultModel = v => (SCENES.find(s => s.v === v) || SCENES[SCENES.length - 1]).m;
+/* 顶栏楼层/场景为纯展示信息，修改入口收敎在「地图属性」弹窗 */
+const sceneSn = v => (SCENES.find(s => s.v === v) || {}).sn || v;
+const setSceneText = v => { $('#mapSceneTxt').textContent = sceneSn(v); };
+const setFloorText = v => { $('#mapFloorTxt').textContent = v; };
 
 function openMapAttr() {
   const scenes = SCENES.map(s => `<option value="${s.v}" ${s.v === S.scene ? 'selected' : ''}>${s.n}</option>`).join('');
@@ -3841,18 +3832,18 @@ function openMapAttr() {
     .map(m => `<option ${m === sceneDefaultModel(S.scene) ? 'selected' : ''}>${m}</option>`).join('');
   openModal('地图属性', `
     <div class="field"><label>地图名称</label><input id="maName" value="${$('#mapName').value}"/></div>
-    <div class="field"><label>楼层</label><input id="maFloor" value="${$('#mapFloor').value}"/></div>
+    <div class="field"><label>楼层</label><input id="maFloor" value="${$('#mapFloorTxt').textContent}"/></div>
     <div class="field"><label>场景</label><select id="maScene">${scenes}</select>
       <div style="font-size:11.5px;color:#d46b08;margin-top:5px">从停车场（地库）切换至其他场景时，车道、围挡区、减速带等停车场元素将被删除，需二次确认</div></div>
     <div class="field"><label>场景 AI 模型</label><select id="maModel">${models}</select></div>
-    <div class="field"><label>适用机型</label><div class="ro">多机型通用（按元素能力角标区分）</div></div>
-    <div class="field"><label>来源</label><div class="ro">云端拉取 · 1#P4PuiStore · 2026-11-11 16:20</div></div>
-    <div class="field"><label>地图版本</label><div class="ro">v2.0.4（与端侧 v2.0.x 兼容）</div></div>
   `, [
     { t: '取消', fn: closeModal },
     { t: '保存', cls: 'primary', fn: () => {
       const ns = $('#maScene').value;
       $('#mapName').value = $('#maName').value;
+      const nf = $('#maFloor').value.trim();
+      if (nf) setFloorText(nf);
+      markDirty();
       if (ns !== S.scene) { closeModal(); applyScene(ns); }   // 切场景仍走统一校验（停车场→其他场景需确认删除）
       else { closeModal(); toast('地图属性已更新'); }
     } },
@@ -3862,8 +3853,8 @@ function openMapAttr() {
 function applyScene(ns) {
   const dropped = elements.filter(e => EL[e.type].only && EL[e.type].only !== ns);
   if (!dropped.length) {
-    S.scene = ns; $('#mapScene').value = ns;
-    renderPalette(); toast('场景已切换为「' + $('#mapScene').selectedOptions[0].textContent + '」');
+    S.scene = ns; setSceneText(ns);
+    renderPalette(); toast('场景已切换为「' + sceneSn(ns) + '」');
     return;
   }
   // 从停车场场景切换至其他场景：车道、围挡区、减速带等停车场元素将被删除，需二次确认
@@ -3873,12 +3864,12 @@ function applyScene(ns) {
       <div style="font-size:12.5px;margin-top:10px">以下 ${dropped.length} 个停车场相关元素将被删除：</div>
       <ul class="warnlist">${dropped.map(e => `<li>${e.props.name || e.name}（${EL[e.type].n}）</li>`).join('')}</ul>
     `, [
-      { t: '取消', fn: () => { $('#mapScene').value = S.scene; closeModal(); } },
+      { t: '取消', fn: () => { setSceneText(S.scene); closeModal(); } },
       { t: '确认删除并切换', cls: 'primary', fn: () => {
         const ids = new Set(dropped.map(e => e.id));
         elements = elements.filter(e => !ids.has(e.id));
         S.laneHost = null; S.laneSel = []; S.laneMode = false; S.laneShape = 'rect';   // 车道编辑态一并清理
-        S.scene = ns; $('#mapScene').value = ns; closeModal();
+        S.scene = ns; setSceneText(ns); closeModal();
         renderPalette(); renderAll(); toast('已切换场景，' + dropped.length + ' 个停车场元素已删除');
       } },
     ]);
@@ -3888,10 +3879,10 @@ function applyScene(ns) {
     <div class="scene-warn">当切换后，将根据场景切换对应地图元素，请确认是否修改。</div>
     <div style="font-size:12.5px">以下 ${dropped.length} 个元素不属于新场景，将被置为「待处理」并保留在地图中，不会静默删除：</div>
     <ul class="warnlist">${dropped.map(e => `<li>${e.props.name || e.name}（${EL[e.type].n}）</li>`).join('')}</ul>
-  `, [
-    { t: '取消', fn: () => { $('#mapScene').value = S.scene; closeModal(); } },
+  `  , [
+    { t: '取消', fn: () => { setSceneText(S.scene); closeModal(); } },
     { t: '确认切换', cls: 'primary', fn: () => {
-      S.scene = ns; $('#mapScene').value = ns; closeModal();
+      S.scene = ns; setSceneText(ns); closeModal();
       renderPalette(); renderAll(); toast('已切换场景，' + dropped.length + ' 个元素置为待处理');
     } },
   ]);
@@ -3963,8 +3954,7 @@ $('#siderCollapse').onclick = toggleSider;   // 右上角收起按钮已按要�
 $('#siderExpand').onclick = toggleSider;
 
 $('#elSearch').oninput = () => renderPalette();
-$('#mapScene').onchange = e => applyScene(e.target.value);
-$('#mapFloor').onchange = () => { markDirty(); toast('楼层已更新为 ' + $('#mapFloor').value); };
+/* 顶栏楼层/场景为纯展示：不提供直接切换入口，修改统一走「地图属性」弹窗（含场景切换校验） */
 $('#mapName').onchange = () => markDirty();
 
 $$('#unitSeg button').forEach(b => b.onclick = () => setUnit(b.dataset.u));
