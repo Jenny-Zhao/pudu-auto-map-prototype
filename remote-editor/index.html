@@ -414,6 +414,12 @@
   .ai-st { font-size:10px; color:#389e0d; background:#f6ffed; border:1px solid #b7eb8f; padding:1px 5px; border-radius:3px; flex:0 0 auto; }
   .ai-item.done { opacity:.65; cursor:default; }
   .ai-item.done input { accent-color:#52c41a; }
+  .ps-row { display:flex; align-items:center; gap:8px; padding:8px 10px; font-size:12.5px; cursor:pointer; border-radius:6px; }
+  .ps-row:hover { background:#f6f8fa; }
+  .ps-row.on { background:#f0f7ff; color:#1677ff; font-weight:500; }
+  .ps-nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ps-cnt { font-size:11px; color:#8a9099; flex:0 0 auto; }
+  .ps-row.on .ps-cnt { color:#1677ff; }
   .lp-op { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-3); padding:3px 0; }
   .lp-op input[type=range] { flex:1; accent-color:var(--blue); height:3px; }
 
@@ -3862,77 +3868,99 @@ function runSave(hasWarn) {
 /* ============================================================
    15. 推送 / 地图属性 / 场景切换
 ============================================================ */
-function doPush() {
-  const STORES = [
-    { n:'P4P 智选酒店（春熙路店）', devs:[{mac:'MT1MAX-2C4D-0087', pos:'大堂'},{mac:'MT1MAX-2C4D-0088', pos:'宴会厅'}] },
-    { n:'普渡科技大厦（总部园区）', devs:[{mac:'CC1-3A5B-1121', pos:'1F 前台'},{mac:'CC1-3A5B-1122', pos:'3F 开放区'},{mac:'SH1-9F2E-0455', pos:'负一层员工餐厅'}] },
-    { n:'万象城商业中心', devs:[{mac:'MT1MAX-7B1C-0312', pos:'5F 美食层'},{mac:'BG1-4E8D-2290', pos:'1F 中庭'}] },
-  ];
-  let mode = 'mac', storeIdx = 0, macVal = 'MT1MAX-2C4D-0087';
-  const checked = new Set();   // 门店模式下勾选的设备 MAC
-  const saveMac = () => { const t = $('#pushMac'); if (t) macVal = t.value; };
-  const devListHtml = () => STORES[storeIdx].devs.map(dv => `
-    <label class="ai-item"><input type="checkbox" data-pdev="${dv.mac}" ${checked.has(dv.mac) ? 'checked' : ''}/>
+/* ============================================================
+   推送目标选择（元素编辑页「推送至机器端」与地图列表「推送至设备」共用）
+   两种方式：① 输入 MAC 地址（支持多个）② 搜索门店后勾选该门店下多台设备
+============================================================ */
+const PUSH_STORES = [
+  { n: 'P4P 智选酒店（成都春熙路店）', devs: [{ mac: 'MT1MAX-2C4D-0087', pos: '大堂' }, { mac: 'MT1MAX-2C4D-0088', pos: '宴会厅' }] },
+  { n: '普渡科技大厦（深圳总部园区）', devs: [{ mac: 'CC1-3A5B-1121', pos: '1F 前台' }, { mac: 'CC1-3A5B-1122', pos: '3F 开放区' }, { mac: 'SH1-9F2E-0455', pos: '负一层员工餐厅' }] },
+  { n: '万象城商业中心（成都）', devs: [{ mac: 'MT1MAX-7B1C-0312', pos: '5F 美食层' }, { mac: 'BG1-4E8D-2290', pos: '1F 中庭' }] },
+  { n: '龙湖天街（成都北城店）', devs: [{ mac: 'MT1MAX-9C2A-0119', pos: 'B1 停车场' }, { mac: 'ET1-5D7F-0642', pos: '2F 母婴区' }] },
+  { n: 'IFS 国际金融中心（成都）', devs: [{ mac: 'BG1-1A3C-0771', pos: '1F 大堂' }] },
+];
+function openPushModal(title, mapName) {
+  const st = { mode: 'mac', mac: '', kw: '', storeIdx: 0, checked: new Set() };
+  const cur = () => PUSH_STORES[st.storeIdx];
+  const matched = () => {
+    const kw = st.kw.trim().toLowerCase();
+    return PUSH_STORES.map((s, i) => ({ s, i })).filter(o => !kw
+      || o.s.n.toLowerCase().includes(kw)
+      || o.s.devs.some(d => (d.mac + ' ' + d.pos).toLowerCase().includes(kw)));
+  };
+  const storeListHtml = () => {
+    const arr = matched();
+    if (!arr.length) return `<div style="padding:14px;text-align:center;font-size:12px;color:#8a9099">未找到匹配门店</div>`;
+    return arr.map(o => `<div class="ps-row ${o.i === st.storeIdx ? 'on' : ''}" data-store="${o.i}">
+      <span class="ps-nm">${o.s.n}</span><span class="ps-cnt">${o.s.devs.length} 台</span></div>`).join('');
+  };
+  const devListHtml = () => cur().devs.map(dv => `
+    <label class="ai-item"><input type="checkbox" data-pdev="${dv.mac}" ${st.checked.has(dv.mac) ? 'checked' : ''}/>
       <span class="ai-nm" style="font-variant-numeric:tabular-nums">${dv.mac}</span>
       <span class="ai-pos">${dv.pos}</span></label>`).join('');
+  const devCntText = () => `当前门店：${cur().n} · 已选 ${st.checked.size} 台`;
   const bodyHtml = () => `
+    ${mapName ? `<div class="field"><label>推送地图</label><div class="ro">${mapName}</div></div>` : ''}
     <div class="field"><label>推送方式</label>
       <div class="segs" style="width:100%">
-        <button data-pw="mac" class="${mode === 'mac' ? 'on' : ''}">MAC 地址</button>
-        <button data-pw="store" class="${mode === 'store' ? 'on' : ''}">门店设备</button>
+        <button data-pw="mac" class="${st.mode === 'mac' ? 'on' : ''}">MAC 地址</button>
+        <button data-pw="store" class="${st.mode === 'store' ? 'on' : ''}">门店设备</button>
       </div></div>
-    ${mode === 'mac'
+    ${st.mode === 'mac'
       ? `<div class="field"><label>目标机器（MAC），支持多个，用换行或逗号分隔</label>
-        <textarea id="pushMac" rows="3" placeholder="如：MT1MAX-2C4D-0087&#10;MT1MAX-2C4D-0088" style="resize:vertical;font-family:inherit">${macVal}</textarea></div>`
-      : `<div class="field"><label>选择门店</label>
-        <select id="pushStore">${STORES.map((s, i) => `<option value="${i}" ${i === storeIdx ? 'selected' : ''}>${s.n}（${s.devs.length} 台设备）</option>`).join('')}</select></div>
-      <div class="field"><label id="pushDevCnt">勾选设备（已选 ${checked.size} 台）</label>
-        <div style="border:1px solid var(--border-2);border-radius:8px;padding:2px 6px">${devListHtml()}</div></div>`}`;
-  openModal('推送至机器端', bodyHtml(), [
+        <textarea id="pushMac" rows="3" placeholder="如：MT1MAX-2C4D-0087&#10;MT1MAX-2C4D-0088" style="resize:vertical;font-family:inherit">${st.mac}</textarea></div>`
+      : `<div class="field"><label>搜索门店</label>
+          <input id="pushStoreKw" placeholder="输入门店名称 / 设备 MAC 搜索，如：万象城" value="${st.kw}"/>
+          <div id="pushStoreList" style="max-height:118px;overflow:auto;border:1px solid var(--border-2);border-radius:8px;margin-top:8px">${storeListHtml()}</div></div>
+        <div class="field"><label id="pushDevCnt">${devCntText()}</label>
+          <div id="pushDevList" style="border:1px solid var(--border-2);border-radius:8px;padding:2px 6px;max-height:158px;overflow:auto">${devListHtml()}</div></div>`}`;
+  openModal(title, bodyHtml(), [
     { t: '取消', fn: closeModal },
     { t: '开始推送', cls: 'primary', fn: () => {
-        if (mode === 'mac') {
-          saveMac();
-          const macs = macVal.split(/[\n,，;；\s]+/).map(s => s.trim()).filter(Boolean);
+        const prefix = mapName ? '「' + mapName + '」已下发至 ' : '已下发至 ';
+        if (st.mode === 'mac') {
+          const t = $('#pushMac'); if (t) st.mac = t.value;
+          const macs = st.mac.split(/[\n,，;；\s]+/).map(s => s.trim()).filter(Boolean);
           if (!macs.length) { toast('请至少输入一个 MAC 地址', true); return; }
           closeModal();
-          toast('已下发至 ' + macs.length + ' 台机器，机器端将在 3 秒内拉取新地图');
+          toast(prefix + macs.length + ' 台机器，机器端将在 3 秒内拉取新地图');
         } else {
-          if (!checked.size) { toast('请先勾选要推送的设备', true); return; }
+          if (!st.checked.size) { toast('请先勾选要推送的设备', true); return; }
           closeModal();
-          toast('已下发至 ' + STORES[storeIdx].n + ' 的 ' + checked.size + ' 台设备，机器端将在 3 秒内拉取新地图');
+          toast(prefix + '「' + cur().n + '」的 ' + st.checked.size + ' 台设备，机器端将在 3 秒内拉取新地图');
         }
       } },
   ]);
   const mb = $('#modalBody');
-  const bind = () => {
-    mb.querySelectorAll('[data-pw]').forEach(b => b.onclick = () => { saveMac(); mode = b.dataset.pw; mb.innerHTML = bodyHtml(); bind(); });
-    const sel = $('#pushStore');
-    if (sel) sel.onchange = () => { storeIdx = +sel.value; mb.innerHTML = bodyHtml(); bind(); };
+  const bindDev = () => {
     mb.querySelectorAll('[data-pdev]').forEach(cb => cb.onchange = () => {
-      if (cb.checked) checked.add(cb.dataset.pdev); else checked.delete(cb.dataset.pdev);
-      $('#pushDevCnt').textContent = '勾选设备（已选 ' + checked.size + ' 台）';
+      if (cb.checked) st.checked.add(cb.dataset.pdev); else st.checked.delete(cb.dataset.pdev);
+      const lb = $('#pushDevCnt'); if (lb) lb.textContent = devCntText();
     });
+  };
+  const bindStoreList = () => {
+    mb.querySelectorAll('[data-store]').forEach(r => r.onclick = () => {
+      st.storeIdx = +r.dataset.store;
+      $('#pushStoreList').innerHTML = storeListHtml(); bindStoreList();
+      $('#pushDevList').innerHTML = devListHtml(); bindDev();
+      $('#pushDevCnt').textContent = devCntText();
+    });
+  };
+  const bind = () => {
+    mb.querySelectorAll('[data-pw]').forEach(b => b.onclick = () => {
+      const t = $('#pushMac'); if (t) st.mac = t.value;
+      st.mode = b.dataset.pw; mb.innerHTML = bodyHtml(); bind();
+    });
+    const kw = $('#pushStoreKw');
+    if (kw) kw.oninput = () => { st.kw = kw.value; $('#pushStoreList').innerHTML = storeListHtml(); bindStoreList(); };
+    bindStoreList(); bindDev();
   };
   bind();
 }
+function doPush() { openPushModal('推送至机器端', ''); }
 
-/* 地图列表页：推送至设备（输入 MAC，支持多个） */
-function doPushDevice(name) {
-  openModal('推送至设备', `
-    <div class="field"><label>推送地图</label><div class="ro">${name}</div></div>
-    <div class="field"><label>目标机器（MAC），支持多个，用换行或逗号分隔</label>
-      <textarea id="pushMac" rows="3" placeholder="如：MT1MAX-2C4D-0087&#10;MT1MAX-2C4D-0088" style="resize:vertical;font-family:inherit"></textarea></div>
-  `, [
-    { t: '取消', fn: closeModal },
-    { t: '开始推送', cls: 'primary', fn: () => {
-      const macs = $('#pushMac').value.split(/[\n,，;；\s]+/).map(s => s.trim()).filter(Boolean);
-      if (!macs.length) { toast('请至少输入一个 MAC 地址', true); return; }
-      closeModal();
-      toast('「' + name + '」已下发至 ' + macs.length + ' 台机器，机器端将在 3 秒内拉取');
-    } },
-  ]);
-}
+/* 地图列表页：推送至设备（MAC 多填 / 搜索门店勾选设备） */
+function doPushDevice(name) { openPushModal('推送至设备', name); }
 
 /* 场景枚举与默认场景模型（对齐功能点表：地图文件 × 场景 × 场景模型） */
 const SCENES = [
