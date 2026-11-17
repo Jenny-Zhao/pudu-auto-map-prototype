@@ -411,6 +411,9 @@
   .ai-dot { width:9px; height:9px; border-radius:3px; flex:0 0 9px; }
   .ai-nm { font-weight:500; }
   .ai-pos { margin-left:auto; font-size:11px; color:#8a9099; font-variant-numeric:tabular-nums; }
+  .ai-st { font-size:10px; color:#389e0d; background:#f6ffed; border:1px solid #b7eb8f; padding:1px 5px; border-radius:3px; flex:0 0 auto; }
+  .ai-item.done { opacity:.65; cursor:default; }
+  .ai-item.done input { accent-color:#52c41a; }
   .lp-op { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-3); padding:3px 0; }
   .lp-op input[type=range] { flex:1; accent-color:var(--blue); height:3px; }
 
@@ -1165,7 +1168,7 @@ const S = {
   sel: [], hover: null, view: 'global',
   lens: false, panMode: false,
   layers: {}, erasing: false, brush: 0.5, eraseMode: 'brush', brushPop: false, pointEdit: false, stopSel: null,
-  aiConv: null,          // AI 识别候选采纳态 {kind:'carpet'|'bump', sel:Set<候选对象>}（一次性操作，不可逆）
+  aiConv: null,          // AI 识别候选采纳态 {kind, sel:Set}：已采纳/未采纳双状态留存，未采纳可二次采纳
   laneMode: false, laneHost: null,   // 停车场车道绘制模式
   laneShape: 'rect',                 // 车道绘制形状：rect 方形 / pen 钢笔
   laneSel: [],                       // 选中的车道索引（多选）
@@ -1418,26 +1421,26 @@ function stopLaneMode() {           // 结束绘制，回到车道选择态
   renderTouchbar(); renderProps(); draw();
 }
 
-/* ---------- AI 识别候选采纳（对齐本体：大模型识别的地毯/减速带，手动勾选后转为正式元素，一次性操作不可逆） ---------- */
+/* ---------- AI 识别候选采纳（地毯/减速带：已采纳与未采纳分别展示，未采纳可随时二次采纳转为正式元素） ---------- */
 const AI_CONV_SRC = { CARPET: 'carpet', SPEED_BUMP: 'bump' };   // 编辑工具 → AI 候选类型
-const aiConvCands = kind => LAYER_DATA.ai.filter(a => a.k === kind);
-function aiConvCount(kind) { return aiConvCands(kind).length; }
+const aiConvCands   = kind => LAYER_DATA.ai.filter(a => a.k === kind);                 // 全量（含已采纳）
+const aiConvPending = kind => aiConvCands(kind).filter(a => !a.adopted);               // 未采纳
+function aiConvCount(kind) { return aiConvPending(kind).length; }
 function startAiConv() {
   const kind = AI_CONV_SRC[S.tool];
-  const cands = aiConvCands(kind);
-  if (!cands.length) { toast('当前地图没有可采纳的 AI 识别' + EL[S.tool].n + '候选', true); return; }
-  S.aiConv = { kind, sel: new Set(cands) };   // 默认全选（对齐本体交互）
+  const all = aiConvCands(kind), pend = aiConvPending(kind);
+  if (!all.length) { toast('当前地图没有可采纳的 AI 识别' + EL[S.tool].n + '候选', true); return; }
+  S.aiConv = { kind, sel: new Set(pend) };   // 默认勾选全部未采纳候选（已采纳只读展示）
   S.drawing = null; S.sel = [];
   renderTouchbar(); renderProps(); draw();
-  toast('已进入 AI 采纳模式：请在右侧勾选候选后点击「采纳已选」（采纳后不可逆）');
+  toast(pend.length ? '已进入 AI 采纳模式：未采纳候选已默认勾选，点「采纳已选」转为正式元素' : '该类候选已全部采纳，可查看已采纳列表');
 }
 function exitAiConv() { S.aiConv = null; renderTouchbar(); renderProps(); draw(); }
 function adoptAiConv() {
   const cv = S.aiConv; if (!cv) return;
-  const picks = aiConvCands(cv.kind).filter(a => cv.sel.has(a));
-  if (!picks.length) { toast('请先勾选要采纳的候选元素', true); return; }
+  const picks = aiConvPending(cv.kind).filter(a => cv.sel.has(a));
+  if (!picks.length) { toast('请先勾选要采纳的未采纳候选', true); return; }
   const type = cv.kind === 'carpet' ? 'CARPET' : 'SPEED_BUMP';
-  /* 一次性操作，不可逆：不进入撤销栈 */
   let n = elements.filter(e => e.type === type).length;
   const created = [];
   picks.forEach(a => {
@@ -1447,12 +1450,12 @@ function adoptAiConv() {
     const el = mkEl(type, EL[type].n + ' ' + (++n), geom);
     el.props.configured = 1;
     elements.push(el); created.push(el);
+    a.adopted = true; a.elId = el.id;   // 标记已采纳：候选保留，供「已采纳」列表展示与追溯
   });
-  LAYER_DATA.ai = LAYER_DATA.ai.filter(a => !(a.k === cv.kind && cv.sel.has(a)));   // 候选消费后即移除
   S.aiConv = null;
-  S.sel = created.map(e => e.id);   // 采纳后选中首个新元素（对齐本体）
+  S.sel = created.map(e => e.id);   // 采纳后选中新元素（对齐本体）
   markDirty(); renderTouchbar(); renderProps(); renderPalette(); draw();
-  toast('已采纳 ' + created.length + ' 个元素并加入「已创建」（该操作不可逆）');
+  toast('已采纳 ' + created.length + ' 个候选并转为正式元素；未采纳候选已保留，可稍后再次采纳');
 }
 function exitPkEdit() {             // 完全退出停车场编辑态
   S.laneMode = false; S.laneHost = null; S.laneSel = []; S.drawing = null; S.tool = null;
@@ -1704,9 +1707,10 @@ function drawLLM() {
 }
 
 function drawAI() {
-  const cv = S.aiConv;   // AI 采纳态：同类候选用「候选元素」样式渲染（选中紫色斜纹+✓，未选灰色）
+  const cv = S.aiConv;   // AI 采纳态：同类候选用「候选元素」样式渲染（选中紫色斜纹+✓，未选灰色，已采纳绿色）
   LAYER_DATA.ai.forEach(a => {
     if (cv && a.k === cv.kind) { drawAiCand(a, cv); return; }
+    if (a.adopted) return;   // 已采纳候选已转为正式元素，非采纳态不再重复渲染
     if (a.k === 'wheel') {
       ctx.save();
       ctx.fillStyle = 'rgba(250,140,22,.18)'; ctx.strokeStyle = '#fa8c16'; ctx.lineWidth = 0.07;
@@ -1734,19 +1738,20 @@ function drawAI() {
   });
 }
 
-/* AI 采纳态的候选元素样式（对齐本体：选中=紫色斜纹+✓徽标，未选=灰色） */
+/* AI 采纳态的候选元素样式（选中=紫色斜纹+✓徽标，未选=灰色，已采纳=绿色+✓） */
 function drawAiCand(a, cv) {
-  const on = cv.sel.has(a);
+  const done = !!a.adopted;
+  const on = !done && cv.sel.has(a);
   const idx = aiConvCands(cv.kind).indexOf(a) + 1;
   const typeName = cv.kind === 'carpet' ? '地毯区' : '减速带';
-  const col = on ? '#7c3aed' : '#b9bfc7';
+  const col = done ? '#389e0d' : (on ? '#7c3aed' : '#b9bfc7');
   if (cv.kind === 'carpet') {
     ctx.save();
     ctx.beginPath(); ctx.roundRect(a.x - a.w/2, a.y - a.h/2, a.w, a.h, 0.15);
-    ctx.fillStyle = on ? 'rgba(124,58,237,.10)' : 'rgba(150,155,160,.10)';
+    ctx.fillStyle = done ? 'rgba(56,158,13,.10)' : on ? 'rgba(124,58,237,.10)' : 'rgba(150,155,160,.10)';
     ctx.fill();
     ctx.clip();
-    ctx.strokeStyle = on ? 'rgba(124,58,237,.30)' : 'rgba(150,155,160,.25)'; ctx.lineWidth = 0.05;
+    ctx.strokeStyle = done ? 'rgba(56,158,13,.25)' : on ? 'rgba(124,58,237,.30)' : 'rgba(150,155,160,.25)'; ctx.lineWidth = 0.05;
     for (let x = a.x - a.w/2 - a.h; x < a.x + a.w/2; x += 0.45) {
       ctx.beginPath(); ctx.moveTo(x, a.y - a.h/2); ctx.lineTo(x + a.h, a.y + a.h/2); ctx.stroke();
     }
@@ -1756,17 +1761,17 @@ function drawAiCand(a, cv) {
     ctx.beginPath(); ctx.roundRect(a.x - a.w/2, a.y - a.h/2, a.w, a.h, 0.15); ctx.stroke();
     ctx.restore();
     chip(a.x, a.y - a.h/2 - 0.32, typeName + ' ' + idx, col);
-    if (on) aiCkBadge(a.x + a.w/2, a.y - a.h/2, col);
+    if (on || done) aiCkBadge(a.x + a.w/2, a.y - a.h/2, col);
   } else {
     ctx.save();
-    ctx.fillStyle = on ? 'rgba(124,58,237,.18)' : 'rgba(150,155,160,.15)';
+    ctx.fillStyle = done ? 'rgba(56,158,13,.15)' : on ? 'rgba(124,58,237,.18)' : 'rgba(150,155,160,.15)';
     ctx.strokeStyle = col; ctx.lineWidth = 0.08;
     ctx.setLineDash(on ? [] : [0.22, 0.18]);
     ctx.beginPath(); ctx.roundRect(a.x - 1.4, a.y - 0.22, 2.8, 0.44, 0.1);
     ctx.fill(); ctx.stroke();
     ctx.restore();
     chip(a.x, a.y - 0.56, typeName + ' ' + idx, col);
-    if (on) aiCkBadge(a.x + 1.4, a.y, col);
+    if (on || done) aiCkBadge(a.x + 1.4, a.y, col);
   }
 }
 function aiCkBadge(x, y, col) {
@@ -2543,7 +2548,7 @@ function inEditMode() {
 }
 
 function hintFor(d) {
-  if (S.aiConv) return 'AI 采纳模式：在右侧勾选候选元素，点「采纳已选」转为正式元素（一次性操作，不可逆）；再次点 AI 按钮或放弃可退出';
+  if (S.aiConv) return 'AI 采纳模式：已采纳/未采纳分组展示，未采纳候选可勾选后点「采纳已选」转为正式元素；再次点 AI 按钮或完成可退出';
   if (S.panMode) return '手掌模式：按住画布拖拽平移，点击画笔按钮返回编辑模式';
   if (S.laneHost && S.tool === 'PARKING') {
     if (!S.laneMode) return '车道编辑：点击车道选中（再次点击取消，可多选），✕ 退出停车场编辑；点击画笔退出绘制，选择形状按钮绘制新车道';
@@ -2643,41 +2648,56 @@ function updateScale() {
 /* ============================================================
    10. 属性面板
 ============================================================ */
-/* AI 采纳态的右侧面板（对齐本体「AI 生成」页：说明 + 勾选列表 + 放弃/采纳已选） */
+/* AI 采纳态的右侧面板（已采纳/未采纳分组展示；未采纳可勾选二次采纳，已采纳只读追溯） */
 function renderAiConvProps(pp, tag, body) {
   const cv = S.aiConv;
   const typeName = cv.kind === 'carpet' ? '地毯区' : '减速带';
-  const cands = aiConvCands(cv.kind);
+  const all = aiConvCands(cv.kind);
+  const done = all.filter(a => a.adopted);
+  const pend = all.filter(a => !a.adopted);
   pp.textContent = 'AI 生成'; tag.textContent = typeName;
-  let h = `<div class="pp-sec">AI 识别结果</div>
-    <div style="font-size:12px;color:#8a9099;line-height:1.7;margin-bottom:6px">识别到 <b style="color:#1677ff">${cands.length}</b> 个大模型识别的「${typeName}」候选元素，可先勾选再采纳；采纳后进入「已创建」元素。</div>
-    <div class="pp-warn" style="background:#fff1f0;border:1px solid #ffccc7;color:#cf1322;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.6">该操作为一次性操作，<b>不可逆</b>；未采纳的候选将保留，可稍后处理。</div>
-    <div class="ai-sec">
-      <span class="ai-sec-n">${typeName}</span><span class="ai-sec-badge">${cands.length}</span>
-      <label class="ai-all"><input type="checkbox" id="aiAll" ${cands.every(a => cv.sel.has(a)) ? 'checked' : ''}/> 全选</label>
-    </div>
-    ${cands.map((a, i) => `<label class="ai-item"><input type="checkbox" data-aic="${i}" ${cv.sel.has(a) ? 'checked' : ''}/>
+  const itemHtml = (a, adopted) => {
+    const i = all.indexOf(a);
+    return `<label class="ai-item${adopted ? ' done' : ''}">
+      <input type="checkbox" ${adopted ? 'disabled checked' : `data-aic="${i}" ${cv.sel.has(a) ? 'checked' : ''}`}/>
       <span class="ai-dot" style="background:${cv.kind === 'carpet' ? '#d48806' : '#fa541c'}"></span>
       <span class="ai-nm">${typeName} ${i + 1}</span>
-      <span class="ai-pos">${a.x.toFixed(1)}, ${a.y.toFixed(1)}</span></label>`).join('')}
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn2" style="flex:1" id="aiDiscard">放弃</button>
+      <span class="ai-pos">${a.x.toFixed(1)}, ${a.y.toFixed(1)}</span>
+      ${adopted ? '<span class="ai-st">已采纳</span>' : ''}
+    </label>`;
+  };
+  let h = `<div class="pp-sec">AI 识别结果</div>
+    <div style="font-size:12px;color:#8a9099;line-height:1.7;margin-bottom:6px">识别到 <b style="color:#1677ff">${all.length}</b> 个大模型识别的「${typeName}」候选元素：已采纳 <b style="color:#389e0d">${done.length}</b> 个，未采纳 <b style="color:#fa541c">${pend.length}</b> 个。未采纳的候选可勾选后再次采纳，转为正式元素。</div>
+    <div class="pp-warn" style="background:#fffbe6;border:1px solid #ffe58f;color:#ad6800;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.6">未采纳的候选将保留在列表中，可随时二次采纳；已采纳的结果可在「已创建」元素中查看与编辑。</div>`;
+  if (done.length) {
+    h += `<div class="ai-sec"><span class="ai-sec-n" style="color:#389e0d">已采纳</span><span class="ai-sec-badge">${done.length}</span></div>`
+      + done.map(a => itemHtml(a, true)).join('');
+  }
+  if (pend.length) {
+    h += `<div class="ai-sec"><span class="ai-sec-n">未采纳</span><span class="ai-sec-badge">${pend.length}</span>
+      <label class="ai-all"><input type="checkbox" id="aiAll" ${pend.every(a => cv.sel.has(a)) ? 'checked' : ''}/> 全选</label></div>`
+      + pend.map(a => itemHtml(a, false)).join('');
+  } else {
+    h += `<div style="font-size:12px;color:#8a9099;padding:6px 2px 2px">该类候选已全部采纳。</div>`;
+  }
+  h += `<div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn2" style="flex:1" id="aiDiscard">完成</button>
       <button class="btn2 primary" style="flex:1.6" id="aiAdopt" ${cv.sel.size ? '' : 'disabled style="opacity:.5;cursor:not-allowed"'}>采纳已选（${cv.sel.size}）</button>
     </div>`;
   body.innerHTML = h;
-  const all = $('#aiAll');
-  if (all) all.onchange = () => {
-    if (all.checked) cands.forEach(a => cv.sel.add(a)); else cv.sel.clear();
+  const allCk = $('#aiAll');
+  if (allCk) allCk.onchange = () => {
+    if (allCk.checked) pend.forEach(a => cv.sel.add(a)); else cv.sel.clear();
     renderProps(); draw();
   };
   body.querySelectorAll('[data-aic]').forEach(cb => {
     cb.onchange = () => {
-      const a = cands[+cb.dataset.aic];
+      const a = all[+cb.dataset.aic];
       if (cb.checked) cv.sel.add(a); else cv.sel.delete(a);
       renderProps(); draw();
     };
   });
-  $('#aiDiscard').onclick = () => { exitAiConv(); toast('已放弃本次采纳，AI 识别候选已保留'); };
+  $('#aiDiscard').onclick = () => { exitAiConv(); toast('已退出，未采纳候选已保留，可稍后再次采纳'); };
   $('#aiAdopt').onclick = adoptAiConv;
 }
 
