@@ -725,6 +725,38 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
 .el-item .stat{font-size:20px;color:var(--hint)}
 .el-item .stat.ok{color:var(--green);font-weight:600}
 .el-item .q{width:28px;height:28px;border-radius:50%;border:2px solid #C7CBD2;color:#B4B9C1;font-size:16px;display:flex;align-items:center;justify-content:center;flex:none}
+/* R78：仅新版 / PC 建图工具可添加的元素（置灰 + 引导弹窗） */
+.el-item.locked{background:#EFF1F4;opacity:.62;cursor:not-allowed}
+.el-item.locked:hover{border-color:transparent;box-shadow:none}
+.el-item.locked:active{transform:none}
+.el-item.locked .nm{color:#8A8F98}
+.el-item.locked>svg{stroke:#AEB4BE;color:#AEB4BE;fill:none}
+.el-item.locked .lock-ic{width:26px;height:26px;stroke:#8A8F98;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.oe-lock-ovl{position:absolute;inset:0;z-index:240;background:rgba(15,22,34,.44);display:none;align-items:center;justify-content:center}
+.oe-lock-ovl.on{display:flex}
+.oe-lock-modal{width:1000px;max-width:94vw;background:#fff;border-radius:18px;padding:24px 30px 20px;box-shadow:0 24px 70px rgba(0,0,0,.32);max-height:calc(100% - 24px);overflow:auto;scrollbar-width:none}
+.oe-lock-modal::-webkit-scrollbar{display:none}
+.oe-lock-hd{display:flex;gap:16px;align-items:flex-start}
+.oe-lock-ic{width:56px;height:56px;border-radius:14px;background:#FFF4E5;display:flex;align-items:center;justify-content:center;flex:none}
+.oe-lock-ic svg{width:30px;height:30px;stroke:#D97706;fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.oe-lock-title{font-size:27px;font-weight:700;color:var(--text)}
+.oe-lock-sub{font-size:20px;color:var(--sub);margin-top:7px;line-height:1.55}
+.oe-lock-sub b{color:var(--text);font-weight:700}
+.oe-lock-path{margin-top:16px;background:#F5F8FD;border-radius:14px;padding:14px 16px 16px}
+.oe-lock-path-hd{font-size:20px;font-weight:700;color:var(--text)}
+.oe-lock-steps{display:flex;align-items:stretch;gap:6px;margin-top:12px}
+.oe-step{flex:1 1 0;min-width:0;background:#fff;border:1.5px solid #E2E6EE;border-radius:12px;padding:8px 8px 10px}
+.oe-step.hl{border-color:var(--blue);box-shadow:0 4px 14px rgba(31,102,241,.13)}
+.oe-step-pic{height:96px;border-radius:8px;background:#EDF0F5;overflow:hidden}
+.oe-step-pic svg{display:block;width:100%;height:100%}
+.oe-step-cap{font-size:16px;line-height:1.35;color:var(--text);margin-top:8px;font-weight:600}
+.oe-step-cap b{display:inline-flex;width:21px;height:21px;border-radius:50%;background:var(--blue);color:#fff;font-size:13px;align-items:center;justify-content:center;margin-right:5px;vertical-align:1px}
+.oe-step-cap span{display:block;font-weight:500;color:var(--sub);font-size:14px;margin-top:2px}
+.oe-step-arrow{display:flex;align-items:center;color:#B4B9C1;font-size:24px;font-weight:700;flex:none}
+.oe-lock-foot{display:flex;justify-content:flex-end;gap:14px;margin-top:16px}
+.oe-lock-btn{height:56px;padding:0 30px;border:none;border-radius:12px;background:#F0F2F5;color:var(--text);font-size:21px;font-weight:600;cursor:pointer;font-family:inherit}
+.oe-lock-btn.primary{background:var(--blue);color:#fff}
+.oe-lock-btn:active{transform:scale(.98)}
 .el-scene{margin-top:6px}
 .el-scene .lab{font-size:23px;font-weight:700;color:var(--sub);padding:18px 4px 12px}
 .el-scene .row{background:#fff;border-radius:10px;min-height:86px;display:flex;align-items:center;gap:14px;padding:0 24px;cursor:pointer}
@@ -800,6 +832,7 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
 .st-ovl{position:absolute;inset:0;z-index:210;background:rgba(15,22,34,.44);display:none;align-items:center;justify-content:center}
 .st-ovl.on{display:flex}
 .st-modal{width:980px;max-width:94vw;background:#fff;border-radius:18px;padding:34px 40px 28px;box-shadow:0 24px 70px rgba(0,0,0,.3);max-height:88vh;display:flex;flex-direction:column}
+.st-hint{font-size:16px;color:#6E7682;line-height:1.5;margin:2px 0 14px}
 .st-modal .hd{font-size:30px;font-weight:700;color:var(--text)}
 .st-modal .sub{font-size:20px;color:var(--sub);margin-top:8px;line-height:1.5}
 .st-opts{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:20px;overflow-y:auto;scrollbar-width:none}
@@ -838,6 +871,8 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
     <div class="list-hd">
       <span class="t">地图列表</span>
       <div class="tr">
+        <!-- R79：元素绘制全局切换入口（同步左侧） -->
+        <button class="sync" onclick="openDrawSel()">元素绘制</button>
         <button class="sync" onclick="toast('已同步云端地图 ✓')">同步</button>
         <button class="new" onclick="wizStart()">新建</button>
       </div>
@@ -1260,6 +1295,93 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
       <button class="btn o" onclick="toast('扩展建图：引导机器人扫描未覆盖区域（原型示意）')">扩展建图</button>
       <button class="btn hold" id="oeNext" onclick="oldNext()">下一步</button>
     </div>
+    <!-- R78：仅新版 / PC 建图工具可添加的元素 —— 点击引导弹窗（含操作路径图） -->
+    <div class="oe-lock-ovl" id="oeLockOvl" onclick="oeLockBgClose(event)">
+      <div class="oe-lock-modal">
+        <div class="oe-lock-hd">
+          <span class="oe-lock-ic"><svg viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.4"/><path d="M8 10.5V8a4 4 0 018 0v2.5"/><path d="M12 14.5v2.5"/></svg></span>
+          <div>
+            <div class="oe-lock-title">该元素仅支持在新版建图中添加</div>
+            <div class="oe-lock-sub" id="oeLockSub">「声光警示区」仅支持通过<b>新版建图方式</b>或<b>PC 建图工具</b>添加，老版交互下无法绘制。</div>
+          </div>
+        </div>
+        <div class="oe-lock-path">
+          <div class="oe-lock-path-hd">切换新版建图方式如下：</div>
+          <div class="oe-lock-steps">
+            <div class="oe-step">
+              <div class="oe-step-pic"><svg viewBox="0 0 200 102">
+                <rect width="200" height="102" fill="#EDF0F5"/>
+                <rect x="8" y="10" width="80" height="82" rx="6" fill="#fff"/>
+                <rect x="14" y="16" width="68" height="38" rx="4" fill="#DCE8FB"/>
+                <rect x="14" y="60" width="44" height="6" rx="3" fill="#D5DAE3"/>
+                <rect x="14" y="70" width="30" height="6" rx="3" fill="#E3E7ED"/>
+                <rect x="52" y="72" width="32" height="16" rx="8" fill="#3ECF8E"/>
+                <path d="M60 80h8m0 0-3-3m3 3-3 3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+                <circle cx="68" cy="80" r="15" fill="none" stroke="#1F66F1" stroke-width="2" stroke-dasharray="3 3"/>
+                <rect x="104" y="10" width="88" height="82" rx="6" fill="#fff"/>
+                <rect x="110" y="16" width="76" height="38" rx="4" fill="#E7EAF0"/>
+                <rect x="110" y="60" width="46" height="6" rx="3" fill="#D5DAE3"/>
+                <rect x="110" y="70" width="34" height="6" rx="3" fill="#E3E7ED"/>
+              </svg></div>
+              <div class="oe-step-cap"><b>1</b>地图列表打开「元素绘制」<span>地图卡片右下角绿色按钮</span></div>
+            </div>
+            <div class="oe-step-arrow">›</div>
+            <div class="oe-step">
+              <div class="oe-step-pic"><svg viewBox="0 0 200 102">
+                <rect width="200" height="102" fill="#EDF0F5"/>
+                <rect x="10" y="20" width="180" height="64" rx="6" fill="#fff"/>
+                <rect x="18" y="28" width="80" height="48" rx="5" fill="#F2F7FF" stroke="#1F66F1" stroke-width="1.8"/>
+                <circle cx="27" cy="37" r="4" fill="none" stroke="#1F66F1" stroke-width="1.4"/><circle cx="27" cy="37" r="2" fill="#1F66F1"/>
+                <text x="35" y="41" font-size="8" fill="#1F66F1" font-weight="700">新版交互</text>
+                <rect x="26" y="48" width="64" height="20" rx="3" fill="#DCE8FB"/>
+                <rect x="104" y="28" width="80" height="48" rx="5" fill="#fff" stroke="#E2E6EE" stroke-width="1.6"/>
+                <circle cx="113" cy="37" r="4" fill="none" stroke="#B4B9C1" stroke-width="1.4"/>
+                <text x="121" y="41" font-size="8" fill="#6E7682">老版交互</text>
+                <rect x="112" y="48" width="64" height="20" rx="3" fill="#EDF0F5"/>
+              </svg></div>
+              <div class="oe-step-cap"><b>2</b>选择「新版交互」<span>弹窗内选中后点确认</span></div>
+            </div>
+            <div class="oe-step-arrow">›</div>
+            <div class="oe-step">
+              <div class="oe-step-pic"><svg viewBox="0 0 200 102">
+                <rect width="200" height="102" fill="#EDF0F5"/>
+                <rect x="8" y="8" width="46" height="86" rx="4" fill="#fff"/>
+                <rect x="12" y="14" width="38" height="9" rx="3" fill="#E4EEFF"/>
+                <rect x="12" y="27" width="38" height="8" rx="3" fill="#EFF1F5"/>
+                <rect x="12" y="39" width="38" height="8" rx="3" fill="#EFF1F5"/>
+                <rect x="12" y="51" width="38" height="8" rx="3" fill="#EFF1F5"/>
+                <rect x="58" y="8" width="134" height="86" rx="4" fill="#F8FAFD"/>
+                <path d="M80 30 150 26 186 34 182 78 120 82 74 76 78 44Z" fill="#DCE8FB" stroke="#2E6BE6" stroke-width="1.6" stroke-linejoin="round"/>
+                <rect x="70" y="72" width="56" height="15" rx="7.5" fill="#1F2733"/>
+                <circle cx="176" cy="80" r="10" fill="#1F66F1"/>
+                <path d="M172 80l3 3 5-5" stroke="#fff" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg></div>
+              <div class="oe-step-cap"><b>3</b>进入「元素编辑·新版」<span>第 8 步即为新版编辑页</span></div>
+            </div>
+            <div class="oe-step-arrow">›</div>
+            <div class="oe-step hl">
+              <div class="oe-step-pic"><svg viewBox="0 0 200 102">
+                <rect width="200" height="102" fill="#EDF0F5"/>
+                <rect x="6" y="6" width="84" height="90" rx="4" fill="#fff"/>
+                <text x="13" y="20" font-size="7" fill="#6E7682">必选 ▾</text>
+                <text x="13" y="36" font-size="7" fill="#6E7682">常用 ▾</text>
+                <text x="13" y="52" font-size="7" fill="#1F66F1" font-weight="700">其他 ▾</text>
+                <rect x="11" y="57" width="74" height="14" rx="3" fill="#E8F0FE" stroke="#1F66F1" stroke-width="1.2"/>
+                <circle cx="19" cy="64" r="3.2" fill="#F7A94B"/>
+                <text x="26" y="67" font-size="7" fill="#1F66F1" font-weight="700">声光警示区</text>
+                <text x="100" y="46" font-size="8" fill="#6E7682">← 在元素栏「其他」中</text>
+                <text x="100" y="60" font-size="8" fill="#6E7682">点击即可绘制</text>
+              </svg></div>
+              <div class="oe-step-cap"><b>4</b>元素栏「其他」添加<span id="oeLockStep4">选「声光警示区」后绘制</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="oe-lock-foot">
+          <button class="oe-lock-btn" onclick="oeLockClose()">知道了</button>
+          <button class="oe-lock-btn primary" onclick="oeLockGoNew()">去切换新版交互</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ==================== ⑧-B 老版交互 · 元素绘制 ==================== -->
@@ -1293,7 +1415,8 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
   <!-- ==================== 新建地图 · 选择元素编辑交互方式 ==================== -->
   <div class="st-ovl" id="stOvl">
     <div class="st-modal">
-      <div class="hd" style="margin-bottom:6px">选择地图元素编辑方式</div>
+      <div class="hd" style="margin-bottom:6px">选择元素绘制方式</div>
+      <div class="st-hint">全局设置：新建地图与编辑地图时，将按此处所选方式进入元素绘制；可随时回到地图列表重新切换</div>
       <div class="st-opts">
         <button class="st-opt sel" id="stNew" onclick="stPick('new')">
           <span class="radio"><i></i><span class="t">新版交互</span><span class="tag">推荐</span></span>
@@ -3347,6 +3470,18 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
         .ai-review-item.selected .ai-review-check { background:#6D5CE7; border-color:#6D5CE7; }
         .ai-review-item-copy { min-width:0; flex:1; }
         .ai-review-item-name { color:var(--text); font-size:15px; font-weight:700; }
+        /* R85：AI 生成结果 已采纳 / 未采纳 状态 */
+        .ai-review-sub { padding:12px 16px 4px; color:var(--text-hint); font-size:12px; font-weight:800; letter-spacing:.2px; background:#fff; }
+        .ai-review-sub.pending { color:#B76E00; }
+        .ai-review-sub.accepted { color:#0E9F6E; }
+        .ai-review-status { flex:0 0 auto; height:24px; padding:0 10px; border-radius:999px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; }
+        .ai-review-status.accepted { background:#E7F8EF; color:#0E9F6E; }
+        .ai-review-status.pending { background:#FFF4E5; color:#B76E00; }
+        .ai-review-item.accepted { background:#FBFDFC; }
+        .ai-review-item.accepted .ai-review-item-name { color:var(--text-sub); font-weight:600; }
+        .ai-review-check.done { background:#0E9F6E; border-color:#0E9F6E; }
+        .ai-review-adopt { min-width:58px; height:32px; padding:0 12px; border:1px solid var(--primary); border-radius:8px; background:#fff; color:var(--primary); font-size:13px; font-weight:700; cursor:pointer; flex:0 0 auto; }
+        .ai-review-adopt:active { background:var(--bg-active); }
         .ai-review-actions { display:grid; grid-template-columns:1fr 1.45fr; gap:8px; }
         .ai-review-actions .dialog-btn { min-width:0; padding:0 8px; }
         .ai-review-actions.three { grid-template-columns:.9fr .72fr 1.38fr; }
@@ -3528,6 +3663,22 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
         .edge-attribute-title { font-size:17px; font-weight:800; color:var(--text); }
         .edge-attribute-card.active .edge-attribute-title { color:var(--primary); }
         .edge-attribute-desc { font-size:12px; line-height:1.55; font-weight:500; color:var(--text-sub); }
+        /* R84：AGV 路径避障属性 */
+        .agv-attr-card { padding:12px; border:1px solid var(--border-light); border-radius:12px; background:#fff; }
+        .agv-attr-card + .agv-attr-card { margin-top:10px; }
+        .agv-attr-head { display:flex; align-items:center; gap:10px; }
+        .agv-attr-head .titles { flex:1; min-width:0; }
+        .agv-attr-title { font-size:15px; font-weight:800; color:var(--text); }
+        .agv-range { font-size:12px; font-weight:600; color:var(--text-hint); margin-top:3px; }
+        .agv-num-wrap { display:flex; align-items:center; gap:6px; border:1px solid var(--border); border-radius:8px; padding:5px 10px; background:#F7F9FB; flex:none; }
+        .agv-num-input { width:56px; border:none; outline:none; background:transparent; font-size:15px; font-weight:800; text-align:center; color:var(--text); }
+        .agv-num-unit { font-size:13px; font-weight:700; color:var(--text-sub); }
+        .agv-reset { width:32px; height:32px; border-radius:50%; border:1.5px solid var(--border); background:#fff; display:grid; place-items:center; color:var(--text-sub); cursor:pointer; flex:none; }
+        .agv-reset svg { width:16px; height:16px; stroke:currentColor; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+        .agv-attr-body { display:flex; align-items:stretch; gap:12px; margin-top:10px; }
+        .agv-visual { width:150px; flex:none; border-radius:10px; overflow:hidden; background:#3A3F47; }
+        .agv-visual svg { display:block; width:100%; height:auto; }
+        .agv-attr-desc { flex:1; min-width:0; font-size:12px; line-height:1.6; font-weight:500; color:var(--text-sub); align-self:center; }
         .lp-editor-help { color: var(--text-sub); font-size: 12px; line-height: 1.45; margin: -4px 0 8px; }
         .comm-strategy-note { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: #EEF6FF; color: #48627E; line-height: 1.55; }
         .lp-editor-warning {
@@ -3547,6 +3698,68 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
             background: #fff; color: var(--text); display: flex; align-items: center; justify-content: flex-start;
             gap: 10px; font-size: 14px; font-weight: 600; text-align: left;
         }
+        /* R77：声光警示区 · 音频选择 / 生效时间 */
+        .sg-audio-rows { display: grid; gap: 8px; }
+        .sg-audio-row {
+            min-height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 8px;
+            background: #fff; color: var(--text); display: flex; align-items: center; gap: 10px;
+            font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;
+        }
+        .sg-audio-row.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+        .sg-audio-row.sub { min-height: 38px; font-size: 13px; font-weight: 500; }
+        .sg-radio {
+            width: 18px; height: 18px; border: 1.5px solid #A6AFBC; border-radius: 50%;
+            flex: 0 0 auto; display: grid; place-items: center;
+        }
+        .sg-audio-row.active .sg-radio { border-color: var(--primary); }
+        .sg-audio-row.active .sg-radio::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); }
+        .sg-dur { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--text-hint); }
+        .sg-audio-child { margin-left: 18px; }
+        .sg-audio-empty {
+            margin-left: 18px; padding: 8px 10px; border-radius: 8px; background: #FFF7E8;
+            color: #A3630A; font-size: 12px; line-height: 1.5;
+        }
+        .sg-time-block { display: grid; gap: 8px; }
+        .sg-allday-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; background: #fff;
+        }
+        .sg-allday-copy strong { display: block; font-size: 14px; color: var(--text); }
+        .sg-allday-copy span { font-size: 12px; color: var(--text-sub); }
+        .sg-switch {
+            width: 46px; height: 27px; border-radius: 999px; background: #C9CED6; border: none;
+            position: relative; cursor: pointer; flex: 0 0 auto; transition: background .2s;
+        }
+        .sg-switch::after {
+            content: ""; position: absolute; top: 3px; left: 3px; width: 21px; height: 21px;
+            border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: left .2s;
+        }
+        .sg-switch.on { background: var(--primary); }
+        .sg-switch.on::after { left: 22px; }
+        .sg-seg {
+            border: 1px solid var(--border); border-radius: 10px; padding: 9px 10px;
+            background: #fff; display: grid; gap: 8px;
+        }
+        .sg-seg-head { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--text-hint); }
+        .sg-seg-del { border: none; background: none; padding: 2px 4px; font-size: 12px; font-weight: 600; color: var(--text-hint); cursor: pointer; }
+        .sg-seg-del:active { color: #E5484D; }
+        .sg-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+        .sg-day {
+            height: 32px; padding: 0; border: 1px solid var(--border); border-radius: 7px;
+            background: #fff; color: var(--text-sub); font-size: 12px; font-weight: 700; cursor: pointer;
+        }
+        .sg-day.on { border-color: var(--primary); background: var(--primary); color: #fff; }
+        .sg-time-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .sg-time-row input[type=time] {
+            height: 34px; padding: 0 6px; border: 1px solid var(--border); border-radius: 7px;
+            background: #fff; color: var(--text); font-size: 13px; font-weight: 600;
+        }
+        .sg-cross { font-size: 11px; font-weight: 600; color: #A3630A; background: #FFF7E8; border-radius: 6px; padding: 3px 8px; }
+        .sg-add {
+            min-height: 42px; border: 1.5px dashed var(--border); border-radius: 10px;
+            background: none; color: var(--text-sub); font-size: 14px; font-weight: 700; cursor: pointer;
+        }
+        .sg-add:disabled { opacity: .45; cursor: not-allowed; }
         .plan-check-summary {
             margin:14px 14px 8px; padding:12px; border-radius:10px; background:#FFF7E8;
             color:#7A4B00; font-size:15px; line-height:1.55; font-weight:700;
@@ -5973,6 +6186,13 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
         };
         const DEVICE_STATION_TYPES = new Set(Object.keys(DEVICE_STATION_CONFIG));
         const POSITION_LOCKED_DEVICE_TYPES = new Set([...DEVICE_STATION_TYPES, 'gate']);
+        /* R77：声光警示区内置音频库与周历（对齐《声光警示区属性》原型） */
+        const SG_AUDIO_PRESETS = [
+            { id: 'p1', name: '请注意，机器人正在作业', dur: '0:04' },
+            { id: 'p2', name: '前方施工，请绕行', dur: '0:05' },
+            { id: 'p3', name: '消毒作业中，请勿靠近', dur: '0:06' }
+        ];
+        const SG_WEEK = ['一', '二', '三', '四', '五', '六', '日'];
 
         // 每种元素类型支持的形状（点位类型不使用此限制）
         const TOOL_SHAPES = {
@@ -8376,9 +8596,11 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
             startAiGenerationFor(type, event) {
                 event?.stopPropagation();
                 if (!['carpet-zone', 'vehicle-speed-bump'].includes(type)) return;
+                const sameType = this.state.aiGenerationTargetType === type;
                 this.state.aiGenerationTargetType = type;
                 this.state.aiGenerationMode = 'elements';
-                this.state.aiCandidates = [];
+                /* R85：同类型重开时保留原结果（含已采纳/未采纳状态），便于继续二次采纳 */
+                if (!sameType || !this.state.aiCandidates.length) this.state.aiCandidates = [];
                 this.startAiGeneration();
             }
 
@@ -8504,11 +8726,11 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                     };
                     const candidates = {
                         'carpet-zone': [
-                            { id: 'ai-carpet-1', type: 'carpet-zone', name: candidateName('carpet-zone'), shape: 'rect', x: 465, y: 305, width: 205, height: 132, selected: true },
-                            { id: 'ai-carpet-2', type: 'carpet-zone', name: candidateName('carpet-zone'), shape: 'rect', x: 895, y: 555, width: 155, height: 105, selected: true }
+                            { id: 'ai-carpet-1', type: 'carpet-zone', name: candidateName('carpet-zone'), shape: 'rect', x: 465, y: 305, width: 205, height: 132, selected: true, accepted: false, elementId: null },
+                            { id: 'ai-carpet-2', type: 'carpet-zone', name: candidateName('carpet-zone'), shape: 'rect', x: 895, y: 555, width: 155, height: 105, selected: true, accepted: false, elementId: null }
                         ],
                         'vehicle-speed-bump': [
-                            { id: 'ai-bump-1', type: 'vehicle-speed-bump', name: candidateName('vehicle-speed-bump'), shape: 'line', x1: 745, y1: 335, x2: 905, y2: 385, selected: true }
+                            { id: 'ai-bump-1', type: 'vehicle-speed-bump', name: candidateName('vehicle-speed-bump'), shape: 'line', x1: 745, y1: 335, x2: 905, y2: 385, selected: true, accepted: false, elementId: null }
                         ]
                     };
                     this.state.aiCandidates = candidates[this.state.aiGenerationTargetType] || [];
@@ -8595,14 +8817,15 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
 
             toggleAiCandidate(id) {
                 const candidate = this.state.aiCandidates.find(item => item.id === id);
-                if (!candidate) return;
+                if (!candidate || candidate.accepted) return;
                 candidate.selected = !candidate.selected;
                 this.render();
                 this.updateLayers();
             }
 
             toggleAiCandidateType(type) {
-                const candidates = this.state.aiCandidates.filter(item => item.type === type);
+                const candidates = this.state.aiCandidates.filter(item => item.type === type && !item.accepted);
+                if (!candidates.length) return;
                 const shouldSelect = candidates.some(item => !item.selected);
                 candidates.forEach(item => { item.selected = shouldSelect; });
                 this.render();
@@ -9085,38 +9308,71 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                 this.showTopToast(parts.join('，'));
             }
 
-            acceptAiCandidates() {
-                const accepted = this.state.aiCandidates.filter(item => item.selected);
-                if (!accepted.length) return;
-                this.closeAiGenerationTypePicker();
-                let lastAcceptedElement = null;
-                for (const item of accepted) {
-                    if (item.type === 'carpet-zone') {
-                        const el = this.addElement('carpet-zone', 'rect', item.x, item.y, item.width, item.height);
-                        el.properties.aiGenerated = true;
-                        lastAcceptedElement = el;
-                    } else if (item.type === 'forbidden') {
-                        const el = this.addElement('forbidden', 'rect', item.x, item.y, item.width, item.height);
-                        el.properties = { ...(el.properties || {}), aiGenerated: true };
-                    } else if (item.type === 'vehicle-speed-bump') {
-                        const points = [{ x: item.x1, y: item.y1 }, { x: item.x2, y: item.y2 }];
-                        const el = this.addElement('vehicle-speed-bump', 'line', item.x1, item.y1, item.x2, item.y2, points);
-                        el.properties = { ...(el.properties || {}), aiGenerated: true };
-                        lastAcceptedElement = el;
-                    }
+            /* R85：AI 生成结果「已采纳 / 未采纳」双态 —— 未采纳结果支持二次采纳后转化为元素 */
+            adoptAiCandidateItem(item) {
+                if (!item || item.accepted) return null;
+                let el = null;
+                if (item.type === 'carpet-zone') {
+                    el = this.addElement('carpet-zone', 'rect', item.x, item.y, item.width, item.height);
+                    el.properties = { ...(el.properties || {}), aiGenerated: true };
+                } else if (item.type === 'forbidden') {
+                    el = this.addElement('forbidden', 'rect', item.x, item.y, item.width, item.height);
+                    el.properties = { ...(el.properties || {}), aiGenerated: true };
+                } else if (item.type === 'vehicle-speed-bump') {
+                    const points = [{ x: item.x1, y: item.y1 }, { x: item.x2, y: item.y2 }];
+                    el = this.addElement('vehicle-speed-bump', 'line', item.x1, item.y1, item.x2, item.y2, points);
+                    el.properties = { ...(el.properties || {}), aiGenerated: true };
                 }
+                if (!el) return null;
+                item.accepted = true;
+                item.elementId = el.id;
+                item.selected = false;
+                return el;
+            }
+
+            adoptAiCandidate(id) {
+                const item = this.state.aiCandidates.find(candidate => candidate.id === id);
+                if (!item || item.accepted) return;
+                const el = this.adoptAiCandidateItem(item);
+                if (!el) return;
+                this.render();
+                this.updateLayers();
+                this.saveState();
+                const remaining = this.state.aiCandidates.filter(candidate => !candidate.accepted).length;
+                this.showTopToast('已采纳「' + (item.name || TOOL_TYPES[item.type]?.name || '元素') + '」，已转化为元素' + (remaining ? '；剩余 ' + remaining + ' 个未采纳' : ''));
+            }
+
+            acceptAiCandidates() {
+                const pending = this.state.aiCandidates.filter(item => item.selected && !item.accepted);
+                if (!pending.length) return;
+                this.closeAiGenerationTypePicker();
+                let adoptedCount = 0;
+                for (const item of pending) {
+                    if (this.adoptAiCandidateItem(item)) adoptedCount += 1;
+                }
+                const remaining = this.state.aiCandidates.filter(item => !item.accepted).length;
+                this.render();
+                this.updateLayers();
+                this.saveState();
+                this.showTopToast('已采纳 ' + adoptedCount + ' 个元素' + (remaining ? '，剩余 ' + remaining + ' 个未采纳，可稍后再次采纳' : '，识别结果已全部采纳'));
+            }
+
+            finishAiGeneration() {
+                const remaining = this.state.aiCandidates.filter(item => !item.accepted).length;
+                this.closeAiGenerationTypePicker();
+                clearTimeout(this._aiGenerationTimer);
                 this.state.aiGenerationActive = false;
                 this.state.aiGenerationLoading = false;
-                this.state.aiCandidates = [];
+                this.state.aiReferenceBrushing = false;
+                this.state.aiReferenceBoxStart = null;
+                this.updateAiReferenceEraserCursor(null, false);
+                this.updateAiReferenceBoxPreview(null, false);
                 document.body.classList.remove('ai-generation-active', 'ai-reference-editing', 'ai-reference-erasing');
                 document.getElementById('aiGenerateToggle')?.classList.remove('active');
                 this.render();
                 this.updateLayers();
-                if (lastAcceptedElement) {
-                    this.openLayerEditor(lastAcceptedElement.id);
-                    requestAnimationFrame(() => this.focusAcceptedElement(lastAcceptedElement));
-                }
                 this.saveState();
+                if (remaining) this.showTopToast('已保留 ' + remaining + ' 个未采纳结果，下次打开 AI 生成可继续采纳');
             }
 
             focusAcceptedElement(el) {
@@ -10796,7 +11052,7 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                 } else if (type === 'speed-limit') {
                     el.properties = { customSpeed: 0.6 };
                 } else if (type === 'sound-light-zone') {
-                    el.properties = { soundMode: 'warn', warningVoice: false, buzzer: false, warningLight: false };
+                    el.properties = { soundMode: 'warn', warningVoice: false, buzzer: false, warningLight: false, audioSource: 'builtin', audioPreset: 'p1', audioCustom: null, allDay: false, timeSegments: [{ days: [0, 1, 2, 3, 4], start: '08:00', end: '20:00' }] };
                 } else if (type === 'waiting-zone') {
                     el.properties = { waitDirection: 1, waitTime: 45 };
                 } else if (type === 'glass-zone') {
@@ -14981,6 +15237,7 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
             renderAiCandidates() {
                 if (!this.state.aiGenerationActive || this.state.aiGenerationMode !== 'elements') return;
                 for (const item of this.state.aiCandidates) {
+                    if (item.accepted) continue;
                     const node = document.createElement('button');
                     node.type = 'button';
                     const candidateClass = item.type === 'carpet-zone' ? 'carpet' : item.type === 'forbidden' ? 'forbidden' : 'speed-bump';
@@ -15371,7 +15628,9 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                     this.syncAiReferenceToolbar();
                     return;
                 }
-                const selectedCount = this.state.aiCandidates.filter(item => item.selected).length;
+                const pendingSelected = this.state.aiCandidates.filter(item => item.selected && !item.accepted).length;
+                const totalAccepted = this.state.aiCandidates.filter(item => item.accepted).length;
+                const totalPending = this.state.aiCandidates.length - totalAccepted;
                 if (this.state.aiGenerationLoading) {
                     this.layerList.innerHTML = tabs + '<div class="ai-generation-loading"><span class="ai-generation-visual"><span class="ai-generation-orbit"></span><span class="ai-generation-core">AI</span><span class="ai-generation-spark one"></span><span class="ai-generation-spark two"></span></span><span>正在识别并生成元素…</span></div>';
                     if (this.layerFooter) {
@@ -15381,25 +15640,48 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                     return;
                 }
                 const groups = ['forbidden', 'vehicle-speed-bump', 'carpet-zone'];
-                let html = tabs + '<div class="ai-review-intro">识别到' + this.state.aiCandidates.length + '个元素可以添加，采纳后将进入“已创建”元素。</div>';
+                /* R85：每个类型分别展示「已采纳」「未采纳」，未采纳支持二次采纳 */
+                let html = tabs + '<div class="ai-review-intro">识别到' + this.state.aiCandidates.length + '个元素可以添加，采纳后将进入“已创建”元素。'
+                    + (totalAccepted ? '<br>已采纳 ' + totalAccepted + ' 个 · 未采纳 ' + totalPending + ' 个（未采纳结果可再次采纳）' : '')
+                    + '</div>';
                 groups.forEach(type => {
                     const items = this.state.aiCandidates.filter(item => item.type === type);
                     if (!items.length) return;
-                    const allSelected = items.every(item => item.selected);
+                    const acceptedItems = items.filter(item => item.accepted);
+                    const pendingItems = items.filter(item => !item.accepted);
+                    const allSelected = pendingItems.length > 0 && pendingItems.every(item => item.selected);
                     const groupIcon = allSelected
                         ? '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12h8"/></svg>'
                         : '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l2.7 2.7L16.5 9"/></svg>';
-                    html += '<div class="ai-review-group-title"><span class="ai-review-group-name"><span>' + TOOL_TYPES[type].name + '</span><span class="ai-review-group-count">' + items.length + '</span></span><button class="ai-review-group-toggle" aria-label="' + (allSelected ? '全部取消' : '全部采纳') + '" onclick="app.toggleAiCandidateType(\'' + type + '\')">' + groupIcon + '</button></div>';
-                    items.forEach((item, index) => {
-                        html += '<button class="ai-review-item ' + (item.selected ? 'selected' : '') + '" onclick="app.toggleAiCandidate(\'' + item.id + '\')">'
-                            + '<span class="ai-review-check">' + (item.selected ? '✓' : '') + '</span>'
-                            + '<span class="ai-review-item-copy"><span class="ai-review-item-name">' + (item.name || (TOOL_TYPES[type].name + ' ' + (index + 1))) + '</span></span></button>';
-                    });
+                    html += '<div class="ai-review-group-title"><span class="ai-review-group-name"><span>' + TOOL_TYPES[type].name + '</span><span class="ai-review-group-count">' + items.length + '</span></span>'
+                        + (pendingItems.length ? '<button class="ai-review-group-toggle" aria-label="' + (allSelected ? '全部取消' : '全部采纳') + '" onclick="app.toggleAiCandidateType(\'' + type + '\')">' + groupIcon + '</button>' : '')
+                        + '</div>';
+                    if (acceptedItems.length) {
+                        html += '<div class="ai-review-sub accepted">已采纳 · ' + acceptedItems.length + '</div>';
+                        acceptedItems.forEach(item => {
+                            html += '<div class="ai-review-item accepted">'
+                                + '<span class="ai-review-check done">✓</span>'
+                                + '<span class="ai-review-item-copy"><span class="ai-review-item-name">' + item.name + '</span></span>'
+                                + '<span class="ai-review-status accepted">已采纳</span></div>';
+                        });
+                    }
+                    if (pendingItems.length) {
+                        html += '<div class="ai-review-sub pending">未采纳 · ' + pendingItems.length + '</div>';
+                        pendingItems.forEach((item, index) => {
+                            html += '<div class="ai-review-item ' + (item.selected ? 'selected' : '') + '" role="button" tabindex="0" onclick="app.toggleAiCandidate(\'' + item.id + '\')">'
+                                + '<span class="ai-review-check">' + (item.selected ? '✓' : '') + '</span>'
+                                + '<span class="ai-review-item-copy"><span class="ai-review-item-name">' + (item.name || (TOOL_TYPES[type].name + ' ' + (index + 1))) + '</span></span>'
+                                + '<span class="ai-review-status pending">未采纳</span>'
+                                + '<button class="ai-review-adopt" onclick="event.stopPropagation();app.adoptAiCandidate(\'' + item.id + '\')">采纳</button>'
+                                + '</div>';
+                        });
+                    }
                 });
                 this.layerList.innerHTML = html;
                 if (this.layerFooter) {
                     this.layerFooter.className = 'lp-footer show';
-                    this.layerFooter.innerHTML = '<div class="ai-review-actions"><button class="dialog-btn" onclick="app.cancelAiGeneration()">放弃</button><button class="dialog-btn primary" onclick="app.acceptAiCandidates()" ' + (selectedCount ? '' : 'disabled') + '>采纳已选（' + selectedCount + '）</button></div>';
+                    this.layerFooter.innerHTML = '<div class="ai-review-actions"><button class="dialog-btn" onclick="app.finishAiGeneration()">' + (totalPending ? '稍后处理' : '完成') + '</button>'
+                        + '<button class="dialog-btn primary" onclick="app.acceptAiCandidates()" ' + (pendingSelected ? '' : 'disabled') + '>采纳已选（' + pendingSelected + '）</button></div>';
                 }
             }
 
@@ -15683,10 +15965,11 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                             detailHtml = '<span class="lp-detail-chip icon-only" title="' + (cleanPath === 'loop' ? '回形' : '弓形') + '">' + cleanIcon + '</span>'
                                 + '<span class="lp-detail-chip icon-only" title="' + edgeLabel + '">' + edgeIcon + '</span>';
                         } else if (el.type === 'teaching-route') {
-                            const routeType = el.properties?.routeType || 'clean';
-                            const pathStyle = el.properties?.pathStyle || 'normal';
+                            const rt = this.getTeachingRouteProps(el);
+                            const routeType = rt.routeType;
+                            const pathStyle = rt.pathStyle;
                             detailClass += ' clean-detail';
-                            detailHtml = '<span class="lp-detail-chip">' + (routeType === 'clean' ? '清洁路径' : '非清洁路径') + '</span>';
+                            detailHtml = '<span class="lp-detail-chip">' + (routeType === 'clean' ? '清洁路径' : routeType === 'agv' ? 'AGV路径' : '非清洁路径') + '</span>';
                             if (routeType === 'clean') {
                                 const pathStyleIcon = pathStyle === 'zero'
                                     ? '<svg viewBox="0 0 64 36"><path d="M10 5V31"/><path d="M10 18H54"/><circle cx="22" cy="18" r="4"/></svg>'
@@ -15695,6 +15978,9 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                                         : '<svg viewBox="0 0 64 36"><path d="M8 25C20 7 42 29 56 11"/><circle cx="31" cy="18" r="4"/></svg>';
                                 const pathStyleTitle = pathStyle === 'zero' ? '零距离贴边' : pathStyle === 'conservative' ? '保守贴边' : '普通路径';
                                 detailHtml += '<span class="lp-detail-chip icon-only" title="' + pathStyleTitle + '">' + pathStyleIcon + '</span>';
+                            } else if (routeType === 'agv') {
+                                /* R84：AGV路径 详情展示避障属性值 */
+                                detailHtml += '<span class="lp-detail-chip" title="路径最大宽度 ' + rt.agvMaxWidth.toFixed(1) + 'm · 安全避让距离 ' + rt.agvAvoidDistance.toFixed(1) + 'm">' + rt.agvMaxWidth.toFixed(1) + 'm / ' + rt.agvAvoidDistance.toFixed(1) + 'm</span>';
                             }
                         } else if (el.type === 'return-point') {
                             detailHtml = this.normalizeHeading(el.rotation) + '°';
@@ -16154,8 +16440,10 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                         + '</button>'
                         + '</div></div>';
                 } else if (el.type === 'teaching-route') {
-                    const routeType = el.properties?.routeType || 'clean';
-                    const pathStyle = el.properties?.pathStyle || 'normal';
+                    /* R84：路径类型新增 AGV路径（动态障碍物特殊避障），避障属性含路径最大宽度/安全避让距离 */
+                    const rt = this.getTeachingRouteProps(el);
+                    const routeType = rt.routeType;
+                    const pathStyle = rt.pathStyle;
                     /* R63：按真机「选择路径属性」弹窗补充图示与注释说明 */
                     const routeRobot = bodyX => '<g>'
                         + '<rect x="' + bodyX + '" y="20" width="30" height="38" rx="8" fill="#F6F8FA" stroke="#98A2B3" stroke-width="1.5"/>'
@@ -16177,10 +16465,13 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                         + '<div class="lp-editor-options">'
                         + '<button class="lp-editor-option ' + (routeType === 'clean' ? 'active' : '') + '" data-layer-edit-prop="routeType" data-value="clean"><span>清洁路径</span></button>'
                         + '<button class="lp-editor-option ' + (routeType === 'non-clean' ? 'active' : '') + '" data-layer-edit-prop="routeType" data-value="non-clean"><span>非清洁路径</span></button>'
+                        + '<button class="lp-editor-option ' + (routeType === 'agv' ? 'active' : '') + '" data-layer-edit-prop="routeType" data-value="agv"><span>AGV路径</span></button>'
                         + '</div>'
                         + '<div class="lp-editor-hint route-hint">' + (routeType === 'clean'
                             ? '在此路径上机器人执行清洁任务，请选择下方路径属性。'
-                            : '该路径仅为机器人移动路径，在此路径上机器人不执行清洁任务。')
+                            : routeType === 'agv'
+                                ? '机器人在该路径上运行时，将对识别到的动态障碍物（如 AGV）做特殊避障处理，请设置下方避障属性。'
+                                : '该路径仅为机器人移动路径，在此路径上机器人不执行清洁任务。')
                         + '</div>'
                         + '</div>';
                     if (routeType === 'clean') {
@@ -16210,6 +16501,42 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                             + routeAttrCard('conservative', '保守贴边', visualConservative, '适用于玻璃墙面、黑色墙体、反光金属墙体等边缘；为保证安全，请在该场景下部署虚拟墙（图中红色虚线），机器人贴边区域需较为保守。')
                             + routeAttrCard('normal', '普通路径', visualNormal, '机器人不主动靠近边缘，仅按示教路线清扫。')
                             + '</div></div>';
+                    } else if (routeType === 'agv') {
+                        /* R84：避障属性（对齐真机稿）：路径最大宽度 0.8~99.0m 默 1.0；安全避让距离 0.1~3.0m 默 0.2 */
+                        const agvResetIcon = '<svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 4.5v5h5"/></svg>';
+                        const agvWidthVisual = '<svg viewBox="0 0 150 84">'
+                            + '<rect x="0" y="0" width="150" height="84" fill="#3A3F47"/>'
+                            + '<path d="M6 44H58" stroke="#E7EAEE" stroke-width="2.5" stroke-dasharray="9 7"/>'
+                            + '<path d="M100 44H144" stroke="#E7EAEE" stroke-width="2.5" stroke-dasharray="9 7"/>'
+                            + '<path d="M22 36l18 8-18 8 5-8z" fill="#1F66F1"/><circle cx="46" cy="44" r="3" fill="#1F66F1"/>'
+                            + '<rect x="104" y="24" width="32" height="34" rx="4" fill="#E8A25C" stroke="#23262B" stroke-width="1.5"/>'
+                            + '<rect x="109" y="29" width="22" height="14" rx="2.5" fill="#C97F35"/>'
+                            + '<circle cx="111" cy="56" r="4.5" fill="#1B1F27"/><circle cx="129" cy="56" r="4.5" fill="#1B1F27"/>'
+                            + '<path d="M99 20v40" stroke="#F5B93E" stroke-width="2"/><path d="M95.5 24l3.5-5 3.5 5M95.5 56l3.5 5 3.5-5" stroke="#F5B93E" stroke-width="2" fill="none" stroke-linecap="round"/>'
+                            + '<text x="120" y="74" font-size="9" font-weight="700" fill="#F0C689" text-anchor="middle">AGV</text>'
+                            + '</svg>';
+                        const agvDistVisual = '<svg viewBox="0 0 150 84">'
+                            + '<rect x="0" y="0" width="150" height="84" fill="#3A3F47"/>'
+                            + '<rect x="52" y="10" width="46" height="10" rx="3" fill="#8A6D2F"/>'
+                            + '<rect x="58" y="20" width="34" height="26" rx="4" fill="#E8A25C" stroke="#23262B" stroke-width="1.5"/>'
+                            + '<rect x="63" y="25" width="24" height="12" rx="2.5" fill="#C97F35"/>'
+                            + '<circle cx="65" cy="44" r="4" fill="#1B1F27"/><circle cx="85" cy="44" r="4" fill="#1B1F27"/>'
+                            + '<path d="M75 52v18" stroke="#F5B93E" stroke-width="2"/><path d="M71.5 56l3.5-4 3.5 4M71.5 66l3.5 4 3.5-4" stroke="#F5B93E" stroke-width="2" fill="none" stroke-linecap="round"/>'
+                            + '<path d="M42 74l18 8-18 8 5-8z" fill="#1F66F1" transform="translate(0,-6)"/><circle cx="63" cy="68" r="3" fill="#1F66F1"/>'
+                            + '</svg>';
+                        const agvAttrCard = (key, title, range, val, desc, visual) => '<div class="agv-attr-card">'
+                            + '<div class="agv-attr-head">'
+                            + '<div class="titles"><div class="agv-attr-title">' + title + '</div><div class="agv-range">' + range + '</div></div>'
+                            + '<div class="agv-num-wrap"><input class="agv-num-input" type="number" min="' + (key === 'agvMaxWidth' ? '0.8' : '0.1') + '" max="' + (key === 'agvMaxWidth' ? '99' : '3') + '" step="0.1" value="' + val.toFixed(1) + '" onchange="app.setLayerEditProperty(\'' + key + '\', this.value)"><span class="agv-num-unit">m</span></div>'
+                            + '<button class="agv-reset" type="button" title="恢复默认" onclick="app.resetAgvProp(\'' + key + '\')">' + agvResetIcon + '</button>'
+                            + '</div>'
+                            + '<div class="agv-attr-body"><div class="agv-visual">' + visual + '</div><div class="agv-attr-desc">' + desc + '</div></div>'
+                            + '</div>';
+                        html += '<div class="lp-editor-section">'
+                            + '<div class="lp-editor-label">避障属性</div>'
+                            + agvAttrCard('agvMaxWidth', '路径最大宽度', '0.8 ~ 99.0 m', rt.agvMaxWidth, 'AGV 等动态障碍物装载最宽货物后的宽度。机器人将在该宽度路径内提前避让动态障碍物。', agvWidthVisual)
+                            + agvAttrCard('agvAvoidDistance', '安全避让距离', '0.1 ~ 3.0 m', rt.agvAvoidDistance, '机器人与路径内动态障碍物保持的最小距离，数值越大，避让距离越远。', agvDistVisual)
+                            + '</div>';
                     } else {
                         html += '<div class="lp-editor-section">'
                             + '<div class="lp-editor-options edge-attribute-options">'
@@ -16263,10 +16590,11 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                         + '<div class="lp-speed-guide"><strong>' + speedGuide[0] + '</strong><span>' + speedGuide[1] + '</span><span class="estimate">直线通过 10 米约需 ' + secondsForTenMeters + ' 秒。</span></div>'
                         + '</div>';
                 } else if (el.type === 'sound-light-zone') {
-                    /* R70：新增「静音 / 警示」模式；仅警示模式下展示警示内容三项 */
-                    const soundMode = el.properties?.soundMode === 'mute' ? 'mute' : 'warn';
-                    if (el.properties && el.properties.soundMode === undefined) el.properties.soundMode = 'warn';
-                    const warningVoiceEnabled = !!(el.properties?.warningVoice ?? el.properties?.cleaningVoice);
+                    /* R70：新增「静音 / 警示」模式；仅警示模式下展示警示内容三项
+                       R77：对齐《声光警示区属性》原型，补齐「音频选择」与「生效时间」 */
+                    const sg = this.getSoundZoneProps(el);
+                    const soundMode = sg.soundMode;
+                    const warningVoiceEnabled = sg.warningVoice;
                     const behaviorSwitch = (key, label, icon, enabled = !!el.properties?.[key]) => '<button class="lp-editor-switch ' + (enabled ? 'active' : '') + '" data-layer-edit-prop="' + key + '" data-value="' + (!enabled) + '">' + icon + '<span>' + label + '</span></button>';
                     const voiceIcon = '<svg viewBox="0 0 24 24"><path d="M5 14h3l4 4V6L8 10H5z"/><path d="M16 9c1.5 1.5 1.5 4.5 0 6M19 6c3 3 3 9 0 12"/></svg>';
                     const buzzerIcon = '<svg viewBox="0 0 24 24"><path d="M7 16V9a5 5 0 0110 0v7"/><path d="M5 16h14v3H5zM9 5V3m6 2V3M5 7L3 6m16 1 2-1"/></svg>';
@@ -16284,16 +16612,62 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                             : '')
                         + '</div>';
                     if (soundMode === 'warn') {
+                        const anyBehavior = warningVoiceEnabled || sg.buzzer || sg.warningLight;
                         html += '<div class="lp-editor-section">'
                             + '<div class="lp-editor-label">警示内容</div>'
                             + '<div class="lp-editor-switches">'
                             + behaviorSwitch('warningVoice', '警示语音', voiceIcon, warningVoiceEnabled)
-                            + behaviorSwitch('buzzer', '蜂鸣器', buzzerIcon)
-                            + behaviorSwitch('warningLight', '警示灯', lightIcon)
+                            + behaviorSwitch('buzzer', '蜂鸣器', buzzerIcon, sg.buzzer)
+                            + behaviorSwitch('warningLight', '警示灯', lightIcon, sg.warningLight)
                             + '</div>'
-                            + '<div class="lp-editor-help">至少开启一项警示内容；机器人进入该区域后按所选方式警示。</div>'
+                            + (anyBehavior
+                                ? '<div class="lp-editor-help">至少开启一项警示内容；机器人进入该区域后按所选方式警示。</div>'
+                                : '<div class="lp-editor-warning">至少开启一项警示内容，否则该区域不会产生任何警示。</div>')
                             + '</div>';
+                        if (warningVoiceEnabled) {
+                            const customAudio = sg.audioCustom;
+                            html += '<div class="lp-editor-section">'
+                                + '<div class="lp-editor-label">音频选择</div>'
+                                + '<div class="sg-audio-rows">'
+                                + '<button class="sg-audio-row ' + (sg.audioSource === 'builtin' ? 'active' : '') + '" type="button" onclick="app.setSoundAudioSource(\'builtin\')"><span class="sg-radio"></span><span>内置音频库</span></button>'
+                                + (sg.audioSource === 'builtin'
+                                    ? SG_AUDIO_PRESETS.map(preset => '<button class="sg-audio-row sub sg-audio-child ' + (sg.audioPreset === preset.id ? 'active' : '') + '" type="button" onclick="app.setSoundAudioPreset(\'' + preset.id + '\')"><span class="sg-radio"></span><span>🔈 ' + preset.name + '</span><span class="sg-dur">' + preset.dur + '</span></button>').join('')
+                                    : '')
+                                + '<button class="sg-audio-row ' + (sg.audioSource === 'custom' ? 'active' : '') + '" type="button" onclick="app.setSoundAudioSource(\'custom\')"><span class="sg-radio"></span><span>自定义音频（设置页扫码上传）</span></button>'
+                                + (sg.audioSource === 'custom'
+                                    ? (customAudio
+                                        ? '<div class="sg-audio-row sub sg-audio-child active" style="cursor:default"><span class="sg-radio"></span><span>' + this.escapeHtml(customAudio.name) + '</span><span class="sg-dur">' + this.escapeHtml(customAudio.dur || '') + '</span></div>'
+                                        : '<div class="sg-audio-empty">该区尚未上传自定义音频，请前往「设置 › 语音灯光和动画 › 声光警示区自定义音频」扫码上传。</div>')
+                                    : '')
+                                + '</div>'
+                                + '<div class="lp-editor-help">自定义音频文件在设置页扫码上传，此处仅选择使用。</div>'
+                                + '</div>';
+                        }
                     }
+                    /* 生效时间：全天生效开关 + 按周时段（最多 3 段，支持跨天） */
+                    const sgSegHtml = sg.allDay ? '' : (sg.timeSegments.length
+                        ? sg.timeSegments.map((seg, si) => {
+                            const days = Array.isArray(seg.days) ? seg.days : [];
+                            const crossDay = seg.end <= seg.start;
+                            return '<div class="sg-seg">'
+                                + '<div class="sg-seg-head"><span>时段 ' + (si + 1) + '</span><button class="sg-seg-del" type="button" onclick="app.removeSoundSegment(' + si + ')">删除</button></div>'
+                                + '<div class="sg-days">' + SG_WEEK.map((week, di) => '<button class="sg-day ' + (days.includes(di) ? 'on' : '') + '" type="button" onclick="app.toggleSoundSegmentDay(' + si + ',' + di + ')">' + week + '</button>').join('') + '</div>'
+                                + '<div class="sg-time-row">'
+                                + '<input type="time" value="' + seg.start + '" onchange="app.setSoundSegmentTime(' + si + ',\'start\',this.value)">'
+                                + '<span style="color:var(--text-hint)">→</span>'
+                                + '<input type="time" value="' + seg.end + '" onchange="app.setSoundSegmentTime(' + si + ',\'end\',this.value)">'
+                                + (crossDay ? '<span class="sg-cross">跨天：至次日 ' + seg.end + '</span>' : '')
+                                + '</div></div>';
+                        }).join('')
+                        : '<div class="lp-editor-warning">未设置时段且未开启全天，该区域将不生效。</div>');
+                    html += '<div class="lp-editor-section">'
+                        + '<div class="lp-editor-label">生效时间</div>'
+                        + '<div class="sg-time-block">'
+                        + '<div class="sg-allday-row"><div class="sg-allday-copy"><strong>全天生效</strong><span>开启后周一至周日全天生效</span></div><button class="sg-switch ' + (sg.allDay ? 'on' : '') + '" type="button" role="switch" aria-checked="' + (sg.allDay ? 'true' : 'false') + '" onclick="app.toggleSoundAllDay()"></button></div>'
+                        + sgSegHtml
+                        + '<button class="sg-add" type="button" onclick="app.addSoundSegment()"' + (sg.allDay || sg.timeSegments.length >= 3 ? ' disabled' : '') + '>＋ 新增时段（每区最多 3 段）</button>'
+                        + '</div>'
+                        + '</div>';
                 } else if (el.type === 'waiting-zone') {
                     /* R65：按需求去掉「进入方向」编辑项，仅保留等待时间 */
                     const waitTime = this.normalizeWaitTime(el.properties?.waitTime);
@@ -16918,13 +17292,13 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                     el.properties = el.type === 'clean'
                         ? { cleanPath: 'loop', edgePath: 'zero' }
                         : el.type === 'teaching-route'
-                            ? { routeType: 'clean', pathStyle: 'normal' }
+                            ? { routeType: 'clean', pathStyle: 'normal', agvMaxWidth: 1, agvAvoidDistance: 0.2 }
                         : el.type === 'fall-risk'
                             ? { poolOrHighDrop: false }
                         : el.type === 'speed-limit'
                             ? { customSpeed: 0.6 }
                         : el.type === 'sound-light-zone'
-                            ? { soundMode: 'warn', warningVoice: false, buzzer: false, warningLight: false }
+                            ? { soundMode: 'warn', warningVoice: false, buzzer: false, warningLight: false, audioSource: 'builtin', audioPreset: 'p1', audioCustom: null, allDay: false, timeSegments: [{ days: [0, 1, 2, 3, 4], start: '08:00', end: '20:00' }] }
                         : el.type === 'waiting-zone'
                             ? { waitDirection: 1, waitTime: 45 }
                         : el.type === 'glass-zone'
@@ -16941,6 +17315,8 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                 }
                 el.properties[key] = key === 'customSpeed'
                     ? Math.max(0.2, Math.min(1.2, Math.round(Number(value) * 10) / 10))
+                    : key === 'agvMaxWidth' ? Math.max(0.8, Math.min(99, Math.round((Number(value) || 1) * 10) / 10))
+                    : key === 'agvAvoidDistance' ? Math.max(0.1, Math.min(3, Math.round((Number(value) || 0.2) * 10) / 10))
                     : key === 'waitTime' ? this.normalizeWaitTime(value)
                     : key === 'waitDirection' ? (Number(value) === -1 ? -1 : 1)
                     : key === 'glassWidth' ? this.normalizeGlassDimension(value, 0.8)
@@ -16957,6 +17333,126 @@ body{background:#171A1F;display:flex;flex-direction:column;align-items:center;ju
                 this.saveState();
                 this.render();
                 this.renderLayerEditor(el);
+            }
+
+            /* ===== R77：声光警示区属性（音频选择 / 生效时间） ===== */
+            getSoundZoneProps(el) {
+                if (!el.properties) el.properties = {};
+                const p = el.properties;
+                if (p.soundMode !== 'mute') p.soundMode = 'warn';
+                if (typeof p.warningVoice !== 'boolean') p.warningVoice = !!p.cleaningVoice;
+                if (typeof p.buzzer !== 'boolean') p.buzzer = false;
+                if (typeof p.warningLight !== 'boolean') p.warningLight = false;
+                if (p.audioSource !== 'custom') p.audioSource = 'builtin';
+                if (!SG_AUDIO_PRESETS.some(preset => preset.id === p.audioPreset)) p.audioPreset = 'p1';
+                if (p.audioCustom === undefined) p.audioCustom = null;
+                if (typeof p.allDay !== 'boolean') p.allDay = false;
+                if (!Array.isArray(p.timeSegments) || !p.timeSegments.length) {
+                    p.timeSegments = [{ days: [0, 1, 2, 3, 4], start: '08:00', end: '20:00' }];
+                }
+                p.timeSegments = p.timeSegments.slice(0, 3).map(seg => ({
+                    days: Array.isArray(seg.days) ? seg.days.filter(day => day >= 0 && day <= 6) : [],
+                    start: /^\d{2}:\d{2}$/.test(seg.start) ? seg.start : '08:00',
+                    end: /^\d{2}:\d{2}$/.test(seg.end) ? seg.end : '20:00'
+                }));
+                return p;
+            }
+
+            /* ===== R84：示教路径 AGV路径 避障属性 ===== */
+            getTeachingRouteProps(el) {
+                if (!el.properties) el.properties = {};
+                const p = el.properties;
+                if (p.routeType !== 'clean' && p.routeType !== 'non-clean' && p.routeType !== 'agv') p.routeType = 'clean';
+                if (!['zero', 'conservative', 'normal'].includes(p.pathStyle)) p.pathStyle = 'normal';
+                p.agvMaxWidth = Math.max(0.8, Math.min(99, Math.round((Number(p.agvMaxWidth) || 1) * 10) / 10));
+                p.agvAvoidDistance = Math.max(0.1, Math.min(3, Math.round((Number(p.agvAvoidDistance) || 0.2) * 10) / 10));
+                return p;
+            }
+
+            resetAgvProp(key) {
+                const el = this.state.elements.find(e => e.id === this.state.layerEditId);
+                if (!el || el.type !== 'teaching-route') return;
+                this.getTeachingRouteProps(el);
+                if (key === 'agvMaxWidth') el.properties.agvMaxWidth = 1;
+                else if (key === 'agvAvoidDistance') el.properties.agvAvoidDistance = 0.2;
+                this.saveState();
+                this.render();
+                this.renderLayerEditor(el);
+            }
+
+            rerenderSoundZone() {
+                const el = this.state.elements.find(e => e.id === this.state.layerEditId);
+                if (!el || el.type !== 'sound-light-zone') return;
+                this.getSoundZoneProps(el);
+                this.saveState();
+                this.render();
+                this.renderLayerEditor(el);
+            }
+
+            setSoundAudioSource(source) {
+                const el = this.state.elements.find(e => e.id === this.state.layerEditId);
+                if (!el || el.type !== 'sound-light-zone') return;
+                const p = this.getSoundZoneProps(el);
+                p.audioSource = source === 'custom' ? 'custom' : 'builtin';
+                this.rerenderSoundZone();
+            }
+
+            setSoundAudioPreset(presetId) {
+                const el = this.state.elements.find(e => e.id === this.state.layerEditId);
+                if (!el || el.type !== 'sound-light-zone') return;
+                const p = this.getSoundZoneProps(el);
+                if (!SG_AUDIO_PRESETS.some(preset => preset.id === presetId)) return;
+                p.audioPreset = presetId;
+                p.audioSource = 'builtin';
+                this.rerenderSoundZone();
+            }
+
+            toggleSoundAllDay() {
+                const el = this.state.elements.find(e => e.id === this.state.layerEditId);
+                if (!el || el.type !== 'sound-light-zone') return;
+                const p = this.getSoundZoneProps(el);
+                p.allDay = !p.allDay;
+                this.rerenderSoundZone();
+            }
+
+            addSoundSegment() {
+                const el = this.state.elements.find(e => e.id === this.state.layerEditId);
+                if (!el || el.type !== 'sound-light-zone') return;
+                const p = this.getSoundZoneProps(el);
+                if (p.allDay || p.timeSegments.length >= 3) return;
+                p.timeSegments.push({ days: [0, 1, 2, 3, 4], start: '09:00', end: '18:00' });
+                this.rerenderSoundZone();
+            }
+
+            removeSoundSegment(index) {
+                const el = this.state.elements.find(e => e.id === this.state.layerEditId);
+                if (!el || el.type !== 'sound-light-zone') return;
+                const p = this.getSoundZoneProps(el);
+                if (index < 0 || index >= p.timeSegments.length) return;
+                p.timeSegments.splice(index, 1);
+                this.rerenderSoundZone();
+            }
+
+            toggleSoundSegmentDay(index, day) {
+                const el = this.state.elements.find(e => e.id === this.state.layerEditId);
+                if (!el || el.type !== 'sound-light-zone') return;
+                const p = this.getSoundZoneProps(el);
+                const seg = p.timeSegments[index];
+                if (!seg || day < 0 || day > 6) return;
+                const at = seg.days.indexOf(day);
+                if (at >= 0) seg.days.splice(at, 1); else seg.days.push(day);
+                seg.days.sort((a, b) => a - b);
+                this.rerenderSoundZone();
+            }
+
+            setSoundSegmentTime(index, key, value) {
+                const el = this.state.elements.find(e => e.id === this.state.layerEditId);
+                if (!el || el.type !== 'sound-light-zone') return;
+                const p = this.getSoundZoneProps(el);
+                const seg = p.timeSegments[index];
+                if (!seg || (key !== 'start' && key !== 'end') || !/^\d{2}:\d{2}$/.test(value)) return;
+                seg[key] = value;
+                this.rerenderSoundZone();
             }
 
             normalizeWaitTime(value) {
@@ -17825,7 +18321,7 @@ function renderPushPins(){
   <button data-go="p_edit2">⑧ 元素编辑·新版</button>
   <button data-go="p_save">⑨ 生成保存</button>
 </div>
-<div class="caption">建图 2.0 · 需求版 —— 「AI 实时识别」：推图过程中由 RGB 实时识别挡车器 / 减速带 / 地垫（识别过程不面向用户呈现），结果在元素编辑页「AI识别」中查看，支持单个确认、删除、编辑边缘轮廓（拖顶点 / 边线插点）与一键全部确认，确认后自动转化为地图元素（挡车器→禁区、减速带→汽车减速带、地垫→地毯区）并落入元素编辑页；建图信息页场景行新增匹配说明注释；元素编辑页完整复用 robot-map-v7 编辑器交互（原「旧版元素编辑页」已移除）；保存/上传链路升级：保存时校验「跌落风险区」是否绘制（未绘制弹二次风险确认，可去设置或跳过），保存成功停留当前页手动选择是否上传；上传支持后台异步（不阻塞操作），结果全局弹窗提醒且地图列表属性可查看，上传失败支持断点续传（地图列表卡片「继续上传」）；地图列表页支持对地图基础属性（名称/楼层/场景）二次编辑，地图属性弹窗可查看并可跳转编辑；地图文件操作：名称/楼层/场景二次编辑、场景切换（地库切出时二次强提醒）、场景枚举 12 项、AI 场景模型枚举 6 项；场景 AI 模型（创建时按场景静默默认匹配、建图信息页不展示该字段；已独立为地图列表「···」菜单的单独入口「场景 AI 模型」，可手动指定为其他模型，指定后与场景解耦、切场景不再跟随）；属性编辑弹窗场景改为下拉选择、弹窗超高时正文滚动且底部按钮常驻；按名称模糊搜索、排序（默认最新创建/楼层由低到高/自定义排序——卡片手动拖拉拽或 ↑↓ 微调，拖拽落点按目标卡片上/下半部插入其前/后）、定位数据优化（本地定位数据保存 7 天，7 天内可再次手推建图，新增区域取并集），卡片「···」汇聚编辑/属性/复制地图/定位数据优化/上传/删除 Marker/删除地图；元素编辑页新增「编辑自动保存」状态条（随操作即时增量存档，右上角显示保存中/已自动保存时刻）；保存校验按 PRD 顺序执行：必填元素 → 跌落风险区 → 路径可达性 → 防串货（前三项阻塞并给出「去绘制/去调整」，右上角可切换校验演示态）；保存中支持「取消保存」（二次确认，可继续保存从中止进度续跑）；上传内容仅地图文件、不含定位数据（本地保留 7 天）；⑧ 元素编辑页已整体替换为 robot-map-v7 v16 编辑器：元素栏新增停车场/自倾倒工作站/声光警示区/玻璃区/地毯区/汽车减速带/围挡区/应急停靠区等，工具栏新增编辑贴边路径（零贴边/外扩零贴边）、禁区+虚拟墙合并工具、显示图层控制（增强地图/AI识别图层/RGBD图层不透明度、单位公制/英制切换、地图旋转）、元素异常检测与可达性预览、AI 识别候选轮廓编辑工具条，场景枚举与父页对齐为 12 项；「建图数据优化」文案统一为「定位数据优化」；手推扫图页需先开启「打点」模式方可打点，打点仅支持机器人当前点位或以机器人为中心的圆形区域内；地图列表与 ⑧ 元素编辑页「编辑地图信息」切换场景校验（非地库切换及切入地库直接完成；地库切出二次强提醒，确认后才执行切换）；⑤ 添加初始点页新增「补光灯」手动开关入口（默认关闭，开启后提升低照度环境识别成功率）；场景 AI 模型从「编辑基础属性」中拆出，改为地图操作菜单独立入口（显示当前模型，可手动切换/恢复场景默认）；新建地图时先弹窗选择元素编辑交互方式（新版交互=v16 画布编辑器，老版交互=本体清单式卡片列表，弹窗内以图示呈现两种交互差异；选择后第 2-7 步流程一致，第 8 步按所选方式进入对应编辑页；老版页含开始助力悬浮钮、扩展建图、必选项（清洁区域+返航点）未设时「下一步」置灰、逐项绘制页（点元素点击落点/区线元素拖拽绘制/显示面板）；交互方式随地图卡片保存，再次编辑时按卡片路由；选择弹窗去掉顶部说明文案，新版交互缩略图重绘为 v16 编辑器真实布局（左元素栏/画布清洁区域/底部工具条/保存钮）；老版绘制页「显示」面板并入新版图层信息（元素分区 + 图层：背景网格/推行轨迹/实时障碍物/标注点位/手推打点/增强地图/AI识别图层/RGBD图层 + 单位公制/英制切换，背景网格开关联动画布网格显示）；⑧ 编辑器图层信息按需求清单重排（背景网格/RGBD/标注点位/推行轨迹/实时障碍物/增强地图 80%/AI识别/大模型图层三态徽标+再次手动上传/单位，手推打点并入标注点位）；清洁区域元素去掉圆形绘制方式（仅矩形/钢笔），贴边路径编辑去掉撤销/恢复按钮，贴边类型新增「不贴边」（灰色长虚线，工具条/图例/属性面板/图层编辑三卡/列表角标全链路支持））</div>
+<div class="caption">建图 2.0 · 需求版 —— 「AI 实时识别」：推图过程中由 RGB 实时识别挡车器 / 减速带 / 地垫（识别过程不面向用户呈现），结果在元素编辑页「AI识别」中查看，支持单个确认、删除、编辑边缘轮廓（拖顶点 / 边线插点）与一键全部确认，确认后自动转化为地图元素（挡车器→禁区、减速带→汽车减速带、地垫→地毯区）并落入元素编辑页；建图信息页场景行新增匹配说明注释；元素编辑页完整复用 robot-map-v7 编辑器交互（原「旧版元素编辑页」已移除）；保存/上传链路升级：保存时校验「跌落风险区」是否绘制（未绘制弹二次风险确认，可去设置或跳过），保存成功停留当前页手动选择是否上传；上传支持后台异步（不阻塞操作），结果全局弹窗提醒且地图列表属性可查看，上传失败支持断点续传（地图列表卡片「继续上传」）；地图列表页支持对地图基础属性（名称/楼层/场景）二次编辑，地图属性弹窗可查看并可跳转编辑；地图文件操作：名称/楼层/场景二次编辑、场景切换（地库切出时二次强提醒）、场景枚举 12 项、AI 场景模型枚举 6 项；场景 AI 模型（创建时按场景静默默认匹配、建图信息页不展示该字段；已独立为地图列表「···」菜单的单独入口「场景 AI 模型」，可手动指定为其他模型，指定后与场景解耦、切场景不再跟随）；属性编辑弹窗场景改为下拉选择、弹窗超高时正文滚动且底部按钮常驻；按名称模糊搜索、排序（默认最新创建/楼层由低到高/自定义排序——卡片手动拖拉拽或 ↑↓ 微调，拖拽落点按目标卡片上/下半部插入其前/后）、定位数据优化（本地定位数据保存 7 天，7 天内可再次手推建图，新增区域取并集），卡片「···」汇聚编辑/属性/复制地图/定位数据优化/上传/删除 Marker/删除地图；元素编辑页新增「编辑自动保存」状态条（随操作即时增量存档，右上角显示保存中/已自动保存时刻）；保存校验按 PRD 顺序执行：必填元素 → 跌落风险区 → 路径可达性 → 防串货（前三项阻塞并给出「去绘制/去调整」，右上角可切换校验演示态）；保存中支持「取消保存」（二次确认，可继续保存从中止进度续跑）；上传内容仅地图文件、不含定位数据（本地保留 7 天）；⑧ 元素编辑页已整体替换为 robot-map-v7 v16 编辑器：元素栏新增停车场/自倾倒工作站/声光警示区/玻璃区/地毯区/汽车减速带/围挡区/应急停靠区等，工具栏新增编辑贴边路径（零贴边/外扩零贴边）、禁区+虚拟墙合并工具、显示图层控制（增强地图/AI识别图层/RGBD图层不透明度、单位公制/英制切换、地图旋转）、元素异常检测与可达性预览、AI 识别候选轮廓编辑工具条，场景枚举与父页对齐为 12 项；「建图数据优化」文案统一为「定位数据优化」；手推扫图页需先开启「打点」模式方可打点，打点仅支持机器人当前点位或以机器人为中心的圆形区域内；地图列表与 ⑧ 元素编辑页「编辑地图信息」切换场景校验（非地库切换及切入地库直接完成；地库切出二次强提醒，确认后才执行切换）；⑤ 添加初始点页新增「补光灯」手动开关入口（默认关闭，开启后提升低照度环境识别成功率）；场景 AI 模型从「编辑基础属性」中拆出，改为地图操作菜单独立入口（显示当前模型，可手动切换/恢复场景默认）；新建地图时先弹窗选择元素编辑交互方式（新版交互=v16 画布编辑器，老版交互=本体清单式卡片列表，弹窗内以图示呈现两种交互差异；选择后第 2-7 步流程一致，第 8 步按所选方式进入对应编辑页；老版页含开始助力悬浮钮、扩展建图、必选项（清洁区域+返航点）未设时「下一步」置灰、逐项绘制页（点元素点击落点/区线元素拖拽绘制/显示面板）；交互方式随地图卡片保存，再次编辑时按卡片路由；选择弹窗去掉顶部说明文案，新版交互缩略图重绘为 v16 编辑器真实布局（左元素栏/画布清洁区域/底部工具条/保存钮）；老版绘制页「显示」面板并入新版图层信息（元素分区 + 图层：背景网格/推行轨迹/实时障碍物/标注点位/手推打点/增强地图/AI识别图层/RGBD图层 + 单位公制/英制切换，背景网格开关联动画布网格显示）；⑧ 编辑器图层信息按需求清单重排（背景网格/RGBD/标注点位/推行轨迹/实时障碍物/增强地图 80%/AI识别/大模型图层三态徽标+再次手动上传/单位，手推打点并入标注点位）；清洁区域元素去掉圆形绘制方式（仅矩形/钢笔），贴边路径编辑去掉撤销/恢复按钮，贴边类型新增「不贴边」（灰色长虚线，工具条/图例/属性面板/图层编辑三卡/列表角标；老版元素编辑列表「其他」分组新增置灰的地图元素「声光警示区 / AGV路径」，点击弹出引导弹窗（该元素仅支持通过新版建图方式或 PC 建图工具添加），并给出 4 步切换新版建图方式的操作路径图（地图列表打开「元素绘制」→ 选择新版交互 → 进入元素编辑·新版 → 元素栏「其他」添加；R82 老版已去掉 AGV路径，置灰引导仅剩声光警示区）；示教路径属性（R84）：路径类型新增「AGV路径」（机器人运行至该路径时对识别到的动态障碍物做特殊避障处理），避障属性含路径最大宽度（0.8~99.0m，默 1.0）与安全避让距离（0.1~3.0m，默 0.2），均带图示/说明/一键重置，列表详情同步展示属性值；AI生成结果（R85）：地毯区/减速带的 AI 生成候选分别展示为「已采纳」与「未采纳」，未采纳结果支持行内「采纳」按钮或勾选后「采纳已选」二次采纳转化为元素（带 AI 来源标记），退出 AI 生成后未采纳结果保留，同类型重开可继续采纳；R79 地图列表「同步」左侧新增【元素绘制】按钮，弹窗全局切换元素绘制方式（新版/老版，图示差异说明，默认选中新版）；新建与二次编辑不再弹出交互方式选择，直接按全局方式进入对应编辑页；R80 老版绘制页「显示」建图采集层仅保留 背景网格（默认开）/标注点位（默认开）/推行轨迹&自动建图轨迹（默认关）三项，移除实时障碍物、增强层组与 AI 识别图层全链路支持））</div>
 
 <script>
 /* ================= 元素定义（四大分类） ================= */
@@ -17857,8 +18353,13 @@ var EM={
  station:{lb:'工作站',kind:'point',c:'#0E9F6E',icon:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>'},
  charge:{lb:'充电桩',kind:'point',c:'#12B76A',icon:'<path d="M13 3L5 13.5h5.5L10 21l8-10.5h-5.5z"/>'},
  elevator:{lb:'电梯间',kind:'zone',c:'#556677',icon:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8l3-3 3 3M9 16l3 3 3-3M12 5.6v12.8"/>'},
- gate:{lb:'闸机',kind:'point',c:'#556677',icon:'<path d="M4 20V6h16v14"/><path d="M8 20v-9h8v9"/>'}
+ gate:{lb:'闸机',kind:'point',c:'#556677',icon:'<path d="M4 20V6h16v14"/><path d="M8 20v-9h8v9"/>'},
+ /* R78：仅新版建图 / PC 建图工具可添加（老版列表置灰展示，点击给出引导） */
+ sgz:{lb:'声光警示区',kind:'zone',c:'#8A8F98',icon:'<path d="M3.5 18.5h17"/><path d="M6.5 18.5l1.7-8.5h7.6l1.7 8.5"/><circle cx="12" cy="6.4" r="2.1"/><path d="M4.2 9.4L2.6 8.2M19.8 9.4l1.6-1.2"/>'}
 };
+/* R82：AGV路径 已从老版元素列表移除，置灰引导仅剩声光警示区 */
+var OLD_LOCKED=['sgz'];
+var OLD_LOCK_TIP='该元素仅支持通过新版建图方式或 PC 建图工具添加';
 var GROUPS=[
  {id:'req',lb:'1类 · 必选',items:['clean','return'],open:true},
  {id:'common',lb:'2类 · 常用',items:['ai','fall','nonav','noise','teach','water-end','maintain'],open:true},
@@ -17867,7 +18368,7 @@ var GROUPS=[
 ];
 var LEG=[];GROUPS.forEach(function(g){LEG=LEG.concat(g.items)});
 /* ================= 全局状态 ================= */
-var wiz={name:'商用超市一层',floor:'1',scene:'零售商超（综合超市&便利店&药店等）',type:'激光 + VSLAM + Marker',typeManual:false,mode:'auto',limit:false,dur:'3h',estyle:'new'};
+var wiz={name:'商用超市一层',floor:'1',scene:'零售商超（综合超市&便利店&药店等）',type:'激光 + VSLAM + Marker',typeManual:false,mode:'auto',limit:false,dur:'3h'};
 var drawn=[
  {type:'clean',shape:'rect',x:490,y:280,w:250,h:150,vis:true,prop:{}},
  {type:'return',shape:'star',x:330,y:460,vis:true,prop:{}},
@@ -18115,7 +18616,7 @@ function mmCopy(){
   var i=mIdx(mmId);if(i<0)return;var c=listCards[i];mmClose();
   var nid=Math.max.apply(null,listCards.map(function(x){return x.id}))+1;
   var cp={id:nid,nm:(c.nm+' - 副本').slice(0,30),tp:c.tp,scene:c.scene,floor:c.floor,
-    use:false,bds:(c.bds||[]).slice(),od:c.od,ai:c.ai,aiManual:c.aiManual,estyle:(c.estyle||'new')};
+    use:false,bds:(c.bds||[]).slice(),od:c.od,ai:c.ai,aiManual:c.aiManual};
   listCards.splice(i+1,0,cp);
   renderCards();
   toast('已复制为「'+cp.nm+'」，元素与定位数据已同步，云端状态重置');
@@ -18225,7 +18726,7 @@ function mpStep(n){
 var OLD_SECTIONS=[
  {t:'必选',req:true,items:['clean','return']},
  {t:'常用',items:['fall','nonav','noise','teach','water-end','maintain']},
- {t:'其他',items:['speed','rgbd','mswitch','alt','glass','drain','exempt','nozone','bump','carpet']},
+ {t:'其他',items:['speed','rgbd','mswitch','alt','glass','drain','exempt','nozone','bump','carpet','sgz']},
  {t:'选装设置',items:['station','charge','elevator','gate']}
 ];
 function oeStat(t){
@@ -18238,6 +18739,15 @@ function renderOldList(){
     h+='<div class="el-sec">'+(sec.req?'<span class="req">*</span>':'')+sec.t+'</div><div class="el-grid">';
     sec.items.forEach(function(t){
       var m=EM[t];
+      var locked=OLD_LOCKED.indexOf(t)>=0;
+      if(locked){
+        h+='<div class="el-item locked" title="'+OLD_LOCK_TIP+'" onclick="openOldLocked(\''+t+'\')">'
+          +'<svg viewBox="0 0 24 24">'+m.icon+'</svg>'
+          +'<span class="nm">'+m.lb+'</span>'
+          +'<span class="tr"><svg class="lock-ic" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.4"/><path d="M8 10.5V8a4 4 0 018 0v2.5"/></svg></span>'
+          +'</div>';
+        return;
+      }
       h+='<div class="el-item" onclick="openOldDraw(\''+t+'\')">'
         +'<svg viewBox="0 0 24 24" style="stroke:'+m.c+';color:'+m.c+'">'+m.icon+'</svg>'
         +'<span class="nm">'+m.lb+'</span>'
@@ -18261,6 +18771,26 @@ function openOldDraw(t){
   curType=t;
   go('p_draw_old');
   toast('请在画布上绘制「'+EM[t].lb+'」');
+}
+/* R78：仅新版 / PC 建图工具可添加的元素 —— 点击给出引导与切换路径 */
+function openOldLocked(t){
+  var m=EM[t]||{lb:t};
+  var sub=document.getElementById('oeLockSub');
+  if(sub)sub.innerHTML='「'+m.lb+'」仅支持通过<b>新版建图方式</b>或<b>PC 建图工具</b>添加，老版交互下无法绘制。';
+  var s4=document.getElementById('oeLockStep4');
+  if(s4)s4.textContent='选「'+m.lb+'」后绘制';
+  document.getElementById('oeLockOvl').classList.add('on');
+}
+function oeLockClose(){
+  document.getElementById('oeLockOvl').classList.remove('on');
+}
+function oeLockBgClose(e){
+  if(e.target===document.getElementById('oeLockOvl'))oeLockClose();
+}
+function oeLockGoNew(){
+  oeLockClose();
+  go('p_list');
+  openStyleSel('edit');
 }
 function syncAddBtnOld(){
   var m=EM[curType]||EM.alt;
@@ -18288,15 +18818,11 @@ function renderOldCanvas(){
   });
   box.innerHTML=h;svg.innerHTML=sh;
 }
-/* 老版显示面板 · 图层信息（R76：与新版一致，大模型优化层已去掉） */
-var olLayers={grid:true,track:false,obst:false,anno:true,enh:false,ai:false};
-var olGroup={enhanced:false};
-var olOpacity={enh:80};
+/* 老版显示面板 · 图层信息（R80：建图采集层仅保留 背景网格(默认开)/标注点位(默认开)/推行轨迹&自动建图轨迹(默认关)） */
+var olLayers={grid:true,track:false,anno:true};
 var olUnit='metric';
 var OL_LAYER_META={
-  grid:{lb:'背景网格'},track:{lb:'推行轨迹&自动建图轨迹'},obst:{lb:'实时障碍物'},anno:{lb:'标注点位'},
-  enh:{lb:'增强图层'},
-  ai:{lb:'AI识别图层',ic:'<path d="M12 3l1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3z"/><path class="ac" d="M18 14l.9 2.6 2.6.9-2.6.9L18 21l-.9-2.6-2.6-.9 2.6-.9L18 14z"/>'}
+  grid:{lb:'背景网格'},track:{lb:'推行轨迹&自动建图轨迹'},anno:{lb:'标注点位'}
 };
 function opRow(on,icon,lb,fn){
   return '<div class="dw-dp-row'+(on?' on':'')+'" onclick="'+fn+'">'
@@ -18305,48 +18831,16 @@ function opRow(on,icon,lb,fn){
     +'<span class="lb'+(icon?' mut':'')+'">'+lb+'</span></div>';
 }
 function opBadge(lb,cls){return '<span class="badge'+(cls?' '+cls:'')+'">'+lb+'</span>'}
-function sliderRow(k){
-  return '<div class="dw-dp-slider"'+(!olGroup.enhanced?' hidden':'')+'>'
-    +'<span class="sl-lb">透明度</span>'
-    +'<input type="range" min="0" max="100" step="5" value="'+olOpacity[k]+'" oninput="odSetOpacity(\''+k+'\',this)">'
-    +'<span class="sl-val">'+olOpacity[k]+'%</span></div>';
-}
 function odLayerToggle(k){
   olLayers[k]=!olLayers[k];
-  /* 增强层未勾选时勾选增强图层 → 自动勾选增强层组 */
-  if(k==='enh'&&olLayers[k])olGroup.enhanced=true;
   if(k==='grid')document.getElementById('odGrid').classList.toggle('on',olLayers.grid);
   renderOldFx();renderOldDp();
-}
-/* 增强层组开关：勾选后默认选中增强图层（同新版规则） */
-function odGroupToggle(){
-  olGroup.enhanced=!olGroup.enhanced;
-  olLayers.enh=olGroup.enhanced;
-  renderOldFx();renderOldDp();
-}
-function odSetOpacity(k,el){
-  olOpacity[k]=Math.max(0,Math.min(100,Number(el.value)||0));
-  el.value=olOpacity[k];
-  var v=el.parentNode.querySelector('.sl-val');
-  if(v)v.textContent=olOpacity[k]+'%';
 }
 /* 图层画布效果：每个勾选图层在 #odFx（元素层之下、地图之上）渲染对应可视内容 */
 function renderOldFx(){
   var L=olLayers,h='';
   if(L.track)h+='<path class="fx-track" d="M330 545 C390 505 430 525 480 485 C530 445 570 475 620 435 C670 395 710 435 770 385 C820 345 860 375 910 335" fill="none" stroke="#3B82F6" stroke-width="6" stroke-linecap="round" stroke-dasharray="1 16" opacity=".9"/>'
     +'<path d="M352 566 C412 526 452 546 502 506 C552 466 592 496 642 456" fill="none" stroke="#3B82F6" stroke-width="4" stroke-linecap="round" stroke-dasharray="1 14" opacity=".4"/>';
-  if(L.obst)h+='<g class="fx-obst">'
-    +'<circle cx="560" cy="250" r="14" fill="#5B6472" opacity=".78"/>'
-    +'<circle cx="705" cy="180" r="11" fill="#5B6472" opacity=".72"/>'
-    +'<circle cx="860" cy="352" r="16" fill="#5B6472" opacity=".78"/>'
-    +'<circle cx="452" cy="470" r="12" fill="#5B6472" opacity=".72"/>'
-    +'<circle cx="640" cy="612" r="10" fill="#5B6472" opacity=".7"/></g>';
-  if(L.enh)h+='<path class="fx-enh" d="M598 96 L760 106 L768 210 L920 200 L930 300 L1010 308 L1018 430 L840 438 L760 420 L610 380 L520 300 L560 170 Z" fill="#1F66F1" opacity=".10"/>'
-    +'<path d="M598 96 L760 106 L768 210 L920 200 L930 300 L1010 308 L1018 430 L840 438 L760 420 L610 380 L520 300 L560 170 Z" fill="none" stroke="#1F66F1" stroke-width="2.5" stroke-dasharray="10 8" opacity=".45"/>';
-  if(L.ai)h+='<g class="fx-ai">'
-    +'<rect x="500" y="210" width="150" height="95" fill="#7C5CFF18" stroke="#7C5CFF" stroke-width="3" stroke-dasharray="9 7" rx="6"/>'
-    +'<path d="M614 232l2.8 8.2 8.2 2.8-8.2 2.8-2.8 8.2-2.8-8.2-8.2-2.8 8.2-2.8z" fill="#7C5CFF" opacity=".85"/>'
-    +'<text x="508" y="326" font-size="22" fill="#7C5CFF" opacity=".85">AI 候选轮廓</text></g>';
   if(L.anno)h+='<g class="fx-anno">'
     +'<path d="M852 400c5-7 12-6 12 2 0 6-12 14-12 14s-12-8-12-14c0-8 7-9 12-2z" fill="#1F66F1"/>'
     +'<circle cx="852" cy="403" r="3.5" fill="#fff"/>'
@@ -18372,19 +18866,11 @@ function renderOldDp(){
     var vis=drawn.some(function(e){return e.type===t&&e.vis});
     return opRow(vis,null,EM[t].lb,"odToggle('"+t+"')");
   }).join(''):'<div style="padding:6px 22px 10px;font-size:19px;color:var(--hint)">暂未创建元素</div>';
-  /* R75：图层区与新版 displayPopover 结构一致 */
+  /* R80：建图采集层仅保留 背景网格/标注点位/推行轨迹&自动建图轨迹；R83：去掉「静态图层」行 */
   h+='<div class="dw-dp-sec">建图采集层</div>';
-  h+='<div class="dw-dp-row dis"><span class="ck on"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><span class="lb">静态图层</span>'+opBadge('默认图层','warn')+'</div>';
-  h+=opRow(olLayers.grid,null,OL_LAYER_META.grid.lb,"odLayerToggle('grid')");
+  h+='<div class="dw-dp-row'+(olLayers.grid?' on':'')+'" onclick="odLayerToggle(\'grid\')"><span class="ck"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><span class="lb">背景网格</span>'+opBadge('默认开','warn')+'</div>';
   h+='<div class="dw-dp-row'+(olLayers.anno?' on':'')+'" onclick="odLayerToggle(\'anno\')"><span class="ck"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><span class="lb">标注点位</span>'+opBadge('默认开','warn')+'</div>';
-  h+='<div class="dw-dp-row'+(olLayers.track?' on':'')+'" onclick="odLayerToggle(\'track\')"><span class="ck"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><span class="lb">推行轨迹&自动建图轨迹</span>'+opBadge('默认开','warn')+'</div>';
-  h+=opRow(olLayers.obst,null,OL_LAYER_META.obst.lb,"odLayerToggle('obst')");
-  h+='<div class="dw-dp-row dw-group'+(olGroup.enhanced?' on':'')+'" onclick="odGroupToggle()" title="勾选后默认启用增强图层"><span class="ck"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><span class="lb">增强层</span></div>';
-  h+='<div class="dw-dp-child'+(olGroup.enhanced?'':' dim')+'">';
-  h+=opRow(olLayers.enh,null,OL_LAYER_META.enh.lb,"odLayerToggle('enh')");
-  h+=sliderRow('enh');
-  h+='</div>';
-  h+='<div class="dw-dp-row'+(olLayers.ai?' on':'')+'" onclick="odLayerToggle(\'ai\')"><span class="ck"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><svg class="mini" viewBox="0 0 24 24">'+OL_LAYER_META.ai.ic+'</svg><span class="lb mut">AI识别图层</span>'+opBadge('挡车器')+'</div>';
+  h+='<div class="dw-dp-row'+(olLayers.track?' on':'')+'" onclick="odLayerToggle(\'track\')"><span class="ck"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><span class="lb">推行轨迹&自动建图轨迹</span>'+opBadge('默认关','warn')+'</div>';
   h+='<div class="dw-dp-sec">单位</div>';
   h+='<div class="dw-unit-seg"><button class="'+(olUnit==='metric'?'on':'')+'" onclick="odUnitSet(\'metric\')">公制 m</button><button class="'+(olUnit==='imperial'?'on':'')+'" onclick="odUnitSet(\'imperial\')">英制 ft</button></div>';
   document.getElementById('odBody').innerHTML=h;
@@ -18472,7 +18958,7 @@ function mpApply(){
   else if(scChanged&&manual)msg='地图基础属性已更新，场景已切换，AI 模型保持手动指定 ✓';
   toast(msg);
 }
-function openEditFromList(id){curMapId=id;openStyleSel('edit')}
+function openEditFromList(id){curMapId=id;gotoEdit()}
 /* ================= ② 建图信息 ================= */
 var TYPES=['激光 + VSLAM + Marker','激光 + Marker','3D 激光 + Marker'];
 var TYPE_DESC={'激光 + VSLAM + Marker':'视觉惯性里程计 + 激光 + 定位码','激光 + Marker':'纯激光 + 定位码','3D 激光 + Marker':'3D 激光雷达 + 定位码'};
@@ -18527,18 +19013,15 @@ function infoNext(){
   wiz.name=n;wiz.floor=document.getElementById('fmFloor').value;
   go('p_mode');
 }
-function wizStart(){openStyleSel()}
-/* ================= 选择元素编辑交互方式（新老双轨：新建 / 列表二次编辑共用） ================= */
+function wizStart(){go('p_info')}
+/* ================= 元素绘制方式（R79 全局切换：列表页「元素绘制」按钮统一入口，图示说明新老差异） ================= */
+var drawStyle='new';
 var stSel='new';
-var stCtx='create'; /* create=新建流程（确认后进建图信息） edit=地图列表二次编辑（确认后直接进对应编辑页） */
+var stCtx='global'; /* global=列表页「元素绘制」全局切换 edit=老版引导弹窗「去切换新版交互」（确认后进入编辑页） */
+function openDrawSel(){openStyleSel('global')}
 function openStyleSel(ctx){
-  stCtx=ctx||'create';
-  if(stCtx==='edit'){
-    var m=listCards[mIdx(curMapId)];
-    stSel=(m&&m.estyle==='old')?'old':'new';
-  }else{
-    stSel='new';
-  }
+  stCtx=ctx||'global';
+  stSel=(stCtx==='edit')?'new':drawStyle;
   stRender();
   document.getElementById('stOvl').classList.add('on');
 }
@@ -18551,23 +19034,17 @@ function stCancel(){document.getElementById('stOvl').classList.remove('on')}
 function stConfirm(){
   var v=stSel;
   stCancel();
+  drawStyle=v;
   if(stCtx==='edit'){
-    /* R68：二次编辑同样支持重新选择新旧版，并记住该地图的选择 */
-    var m=listCards[mIdx(curMapId)];
-    if(m)m.estyle=v;
-    renderCards();
     gotoEdit();
-    toast(v==='old'?'已选择「老版交互」，进入本体样式元素编辑':'已选择「新版交互」，进入新版元素编辑');
+    toast(v==='old'?'已切换为「老版交互」，进入本体样式元素编辑':'已切换为「新版交互」，进入新版元素编辑');
     return;
   }
-  wiz.estyle=v;
-  go('p_info');
-  toast(v==='old'?'已选择「老版交互」：第 8 步将进入本体样式元素编辑页':'已选择「新版交互」：第 8 步将进入新版元素编辑页');
+  toast(v==='old'?'元素绘制方式已切换为「老版交互（本体）」':'元素绘制方式已切换为「新版交互」');
 }
-/* 第 8 步路由：按当前地图的交互方式进入对应编辑页 */
+/* 第 8 步路由：按全局元素绘制方式进入对应编辑页 */
 function gotoEdit(){
-  var m=listCards[mIdx(curMapId)];
-  if(m&&m.estyle==='old')go('p_edit_old');
+  if(drawStyle==='old')go('p_edit_old');
   else go('p_edit2');
 }
 /* ================= ③ 建图方式 ================= */
@@ -18967,7 +19444,7 @@ function saveSaved(){
 function addSavedCard(){
   listCards.forEach(function(c){c.use=false});
   var nid=++mapSeq;
-  listCards.unshift({id:nid,bds:['New','2D','charge'],nm:(wiz.name||'商用超市一层'),tp:wiz.type||'激光 + VSLAM + Marker',use:true,scene:wiz.scene||SCENES[0],floor:(wiz.floor||'1')+' 楼',ts:++tsSeq,od:7,up:{pc:0,st:'none'},ai:(wiz.ai||sceneModel(wiz.scene||SCENES[0])),aiManual:!!wiz.aiManual,estyle:(wiz.estyle||'new')});
+  listCards.unshift({id:nid,bds:['New','2D','charge'],nm:(wiz.name||'商用超市一层'),tp:wiz.type||'激光 + VSLAM + Marker',use:true,scene:wiz.scene||SCENES[0],floor:(wiz.floor||'1')+' 楼',ts:++tsSeq,od:7,up:{pc:0,st:'none'},ai:(wiz.ai||sceneModel(wiz.scene||SCENES[0])),aiManual:!!wiz.aiManual});
   if(listCards.length>6)listCards.pop();
   curMapId=nid;
 }
@@ -19052,8 +19529,8 @@ function gClose(){document.getElementById('gOvl').classList.remove('on')}
 var ed2SceneApply=null;
 function ed2SceneSwitchConfirm(oldS,newS,applyFn){
   ed2SceneApply=applyFn;
-  gModal('切换场景确认','当前地图属于地库场景，当切换至其他场景时，地库相关元素数据将被删除，可能会影响机器运行，请再次确认，是否切换场景？',
-    null,'<button class="g-editbtn" onclick="ed2SceneCancel()">取消</button><button class="g-ok" style="background:var(--red)" onclick="ed2SceneOk()">确认切换</button>');
+  gModal('切换场景确认','当切换后，将根据场景切换对应匹配地图元素，将导致地库相关元素无法使用，请确认是否修改',
+    null,'<button class="g-editbtn" onclick="ed2SceneCancel()">取消</button><button class="g-ok" style="background:var(--red)" onclick="ed2SceneOk()">确认修改</button>');
 }
 function ed2SceneOk(){
   var f=ed2SceneApply;ed2SceneApply=null;gClose();
