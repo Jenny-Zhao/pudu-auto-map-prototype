@@ -603,6 +603,13 @@
   .tpm-radio.on::after { content:''; width:7px; height:7px; border-radius:50%; background:#1677ff; }
   .tpm-an { font-size:13.5px; font-weight:600; color:#1f2329; }
   .tpm-ad { font-size:12px; color:#8a9099; line-height:1.6; margin-top:3px; }
+  .tpm-num { border:1.5px solid #eceff3; border-radius:10px; padding:10px 12px; }
+  .tpm-num-h { display:flex; align-items:center; gap:8px; }
+  .tpm-num-h input[type=number] { width:74px; height:30px; border:1px solid var(--border-2); border-radius:6px;
+    text-align:center; font-size:13px; font-variant-numeric:tabular-nums; }
+  .tpm-num-h input[type=number]:focus { border-color:#1677ff; outline:none; }
+  .tpm-num-u { font-size:12px; color:#5a6472; }
+  .tpm-num-d { font-size:12px; color:#8a9099; line-height:1.6; margin-top:7px; }
   .tpm-machine { margin-top:14px; font-size:12px; color:#ad5b00; background:#fff7e6;
     border:1px dashed #ffd591; border-radius:8px; padding:8px 12px; line-height:1.6; }
   .tpm-ck { display:flex; align-items:center; gap:9px; border:1px solid #e5e7eb; border-radius:8px;
@@ -911,7 +918,7 @@ const EL = {
   FALL_RISK:{n:'跌落风险区',g:'常用',ic:'⚠',c:'#faad14',geom:'area',shapes:['rect','circle','pen'],p:'P0',needCfg:true,
     props:[{k:'name',t:'text',l:'名称'},{k:'pool',t:'seg',l:'类型',o:['普通落差','泳池'],d:0}]},
   TEACH_PATH:{n:'示教路径',g:'常用',ic:'〰',c:'#722ed1',geom:'line',shapes:['pen'],p:'P0',tpModal:true,needCfg:true,
-    props:[{k:'name',t:'text',l:'名称'},{k:'ptype',t:'seg',l:'路径类型',o:['零距离贴边','保守贴边','普通路径','非清洁路径'],d:2}]},
+    props:[{k:'name',t:'text',l:'名称'},{k:'ptype',t:'seg',l:'路径类型',o:['零距离贴边','保守贴边','普通路径','非清洁路径','AGV路径'],d:2}]},
   EXEMPT:{n:'识别豁免区',g:'常用',ic:'◌',c:'#13c2c2',geom:'area',shapes:['rect','circle','pen'],p:'P0',exModal:true,needCfg:true,
     props:[{k:'name',t:'text',l:'名称'}]},   /* 限制类型/使用场景/关闭项直接平铺在右侧面板（见 renderProps exModal 分支） */
 
@@ -1006,7 +1013,7 @@ const DESC = {
   VIRTUAL_WALL:'在不可通行的区域放置虚拟墙或禁区，放置后机器人在自动清洁任务中不会尝试进入禁区或通过虚拟墙。\n建议在楼梯间等易跌落区的门口使用虚拟墙进行隔断。在不希望机器人进入的区域放置禁区进行隔离。\nPC 端支持手画 / 钢笔绘制虚拟墙；手推虚拟墙（机身左 / 右侧跟随绘制）仅支持在机器端操作。',
   ERASE:'涂抹消除地图上的噪点，可提高路径规划的质量。',
   FALL_RISK:'机器人可能发生跌落的危险区域（如楼梯、扶梯等）。\n部署后，机器人在跌落区附近时会采取更谨慎的运动模式，且不会在自动清洁任务中进入跌落区框选的区域内。',
-  TEACH_PATH:'机器人按此路径清洁，建议在需要贴边清洁的地方设置示教路线。\n绘制方式：① 手画示教路径（PC 端支持）：钢笔逐点绘制，可通过增加端点调整路径方向；② 手推示教路径：仅支持在机器端操作，需现场推行机器人记录轨迹，PC 端保留元素并置灰提醒。\n路径属性：清洁路径（零距离贴边 / 保守贴边 / 普通路径）、非清洁路径。',
+  TEACH_PATH:'机器人按此路径清洁，建议在需要贴边清洁的地方设置示教路线。\n绘制方式：① 手画示教路径（PC 端支持）：钢笔逐点绘制，可通过增加端点调整路径方向；② 手推示教路径：仅支持在机器端操作，需现场推行机器人记录轨迹，PC 端保留元素并置灰提醒。\n路径属性：清洁路径（零距离贴边 / 保守贴边 / 普通路径）、非清洁路径、AGV 路径（路径内动态障碍物特殊避障，可编辑路径最大宽度与安全避让距离）。',
   EXEMPT:'识别豁免区融合 RGBD 限制区、传感器豁免区与车辆识别豁免三类能力，用于屏蔽区域内的传感器检测项。\n适用于无跌落风险但有误识别的场景（如电梯间隙、反光区域）、需强制通行的门与通道（防撞安全门、垂帘门），以及区域内车辆不作为障碍物识别的场景；可在区域属性中选择限制类型并单独配置需关闭的检测项。\n注意：豁免区内机器人部分感知能力会被屏蔽、避障能力下降，请勿在人流量大、移动障碍物多的地方部署。',
   SPEED_ZONE:'指定的区域范围内，将机器人的运行速度限制在设置的参数范围中。\n在医院病房区、敬老院活动区等场景，建议使用速度限制区让机器人保持低速运行；在通过闸机、自动门等需要快速通过的场景，建议保持高速运行快速通过。',
   WAIT_ZONE:'机器人在清洁区域之间切换或沿示教路径行驶时，沿实线方向进入等待区后将原地等待设定时长，计时结束后继续任务。\n典型场景：风淋门 / 消毒门，需停留足够时间完成净化；闸机 / 自动门，短暂等待可避免碰撞或卡门。',
@@ -1964,7 +1971,8 @@ function drawElements() {
       const pts = g.pts || [];
       ctx.beginPath();
       pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
-      ctx.strokeStyle = d.c; ctx.lineWidth = selected ? 0.14 : 0.09;
+      ctx.strokeStyle = (el.type === 'TEACH_PATH' && el.props.ptype === 4) ? '#fa8c16' : d.c;   // AGV 路径橙色区分
+      ctx.lineWidth = selected ? 0.14 : 0.09;
       if (el.type === 'VIRTUAL_WALL' || el.type === 'TEACH_PATH') ctx.setLineDash([0.4, 0.28]);
       ctx.stroke();
       ctx.setLineDash([]);
@@ -2827,6 +2835,9 @@ function renderProps() {
       b.onclick = () => {
         pushUndo();
         e.props[seg.dataset.seg] = parseInt(b.dataset.v);
+        if (e.type === 'TEACH_PATH' && seg.dataset.seg === 'ptype' && e.props.ptype === 4 && e.props.agvW === undefined) {
+          e.props.agvW = 1.0; e.props.agvD = 0.2;   // AGV 路径：避障属性默认值
+        }
         if (EL[e.type].needCfg) e.props.configured = 1;
         markDirty(); renderProps(); draw();
       };
@@ -2868,24 +2879,50 @@ function renderProps() {
   if (laneDel) laneDel.onclick = () => delLanes();
 }
 
-/* 示教路径属性弹窗（对齐建图 2.0：路径类型 清洁/非清洁 + 路径属性卡片） */
+/* 示教路径属性弹窗（对齐建图 2.0：路径类型 清洁/非清洁/AGV + 路径属性卡片 + AGV 避障属性） */
 function openTeachPathModal(el) {
-  const PTYPE = ['零距离贴边', '保守贴边', '普通路径', '非清洁路径'];
+  const PTYPE = ['零距离贴边', '保守贴边', '普通路径', '非清洁路径', 'AGV路径'];
   const ATTRS = [
     { n: '零距离贴边', d: '适用于规则的墙体边缘，机器人可尽量贴近墙体边缘，进行零距离贴边清洁。' },
     { n: '保守贴边', d: '适用于玻璃墙面、黑色墙体、反光金属墙体等边缘；为保证安全，请在该场景边缘部署虚拟墙，机器人将保持安全距离贴边清洁。' },
     { n: '普通路径', d: '机器人沿路径正常行驶清洁，不做特殊贴边处理，适用于大多数常规通道。' },
   ];
-  let st = { clean: el.props.ptype < 3, attr: el.props.ptype < 3 ? el.props.ptype : 2 };
+  const AGV_ATTRS = [
+    { k: 'agvW', n: '路径最大宽度', min: 0.8, max: 99.0, d: 'AGV 等动态障碍物装载最宽货物后的宽度。机器人将在该宽度路径内提前避让动态障碍物。' },
+    { k: 'agvD', n: '安全避让距离', min: 0.1, max: 3.0, d: '机器人与路径内动态障碍物保持的最小距离，数值越大，避让距离越远。' },
+  ];
+  let st = {
+    mode: el.props.ptype < 3 ? 'clean' : (el.props.ptype === 4 ? 'agv' : 'nonclean'),
+    attr: el.props.ptype < 3 ? el.props.ptype : 2,
+    agvW: el.props.agvW ?? 1.0,
+    agvD: el.props.agvD ?? 0.2,
+  };
+  const saveNums = () => {   // 重渲染前读取输入框当前值，避免丢编辑
+    ['agvW', 'agvD'].forEach(k => {
+      const inp = $('#tpNum_' + k);
+      if (inp) { const v = parseFloat(inp.value); if (!isNaN(v)) st[k] = v; }
+    });
+  };
+  const numRow = cfg => `
+    <div class="tpm-num">
+      <div class="tpm-num-h">
+        <div style="flex:1"><div class="tpm-an">${cfg.n}</div>
+          <div class="tpm-ad">${cfg.min} ~ ${cfg.max.toFixed(1)} m</div></div>
+        <input type="number" id="tpNum_${cfg.k}" min="${cfg.min}" max="${cfg.max}" step="0.1" value="${st[cfg.k]}"/>
+        <span class="tpm-num-u">m</span>
+      </div>
+      <div class="tpm-num-d">${cfg.d}</div>
+    </div>`;
   const bodyHtml = () => `
     <div class="tpm-sec">名称</div>
     <input class="tpm-name" id="tpName" value="${String(el.props.name || el.name).replace(/"/g, '&quot;')}"/>
     <div class="tpm-sec">路径类型</div>
     <div class="tpm-cards">
-      <div class="tpm-card ${st.clean ? 'on' : ''}" data-clean="1">清洁路径</div>
-      <div class="tpm-card ${!st.clean ? 'on' : ''}" data-clean="0">非清洁路径</div>
+      <div class="tpm-card ${st.mode === 'clean' ? 'on' : ''}" data-mode="clean">清洁路径</div>
+      <div class="tpm-card ${st.mode === 'nonclean' ? 'on' : ''}" data-mode="nonclean">非清洁路径</div>
+      <div class="tpm-card ${st.mode === 'agv' ? 'on' : ''}" data-mode="agv">AGV路径</div>
     </div>
-    ${st.clean ? `
+    ${st.mode === 'clean' ? `
       <div class="tpm-note">在此路径上机器人执行清洁任务，请选择下方路径属性。</div>
       <div class="tpm-sec">路径属性</div>
       <div class="tpm-attrs">${ATTRS.map((a, i) => `
@@ -2893,12 +2930,16 @@ function openTeachPathModal(el) {
           <span class="tpm-radio ${st.attr === i ? 'on' : ''}"></span>
           <div style="flex:1"><div class="tpm-an">${a.n}</div><div class="tpm-ad">${a.d}</div></div>
         </div>`).join('')}</div>`
-      : `
+      : st.mode === 'nonclean' ? `
       <div class="tpm-note">该路径仅为机器人移动路径，在此路径上机器人不执行清洁任务。</div>
       <div class="tpm-attr on" style="cursor:default;margin-top:10px">
         <span class="tpm-radio on"></span>
         <div style="flex:1"><div class="tpm-an">非清洁路径</div><div class="tpm-ad">该路径仅为机器人移动路径，在此路径上机器人不执行清洁任务。</div></div>
-      </div>`}
+      </div>`
+      : `
+      <div class="tpm-note">机器人运行到该区域时，将识别到的动态障碍物（如 AGV、叉车等）做特殊避障处理，不执行清洁任务。</div>
+      <div class="tpm-sec">避障属性</div>
+      <div class="tpm-attrs">${AGV_ATTRS.map(numRow).join('')}</div>`}
     <div class="tpm-machine">🖐 手推示教路径仅支持在机器端操作：需现场推行机器人记录轨迹，PC 端仅支持手画示教与属性编辑。</div>`;
   openModal('示教路径属性', bodyHtml(), [
     { t: '取消' },
@@ -2906,15 +2947,21 @@ function openTeachPathModal(el) {
         pushUndo();
         const nm = $('#tpName');
         if (nm && nm.value.trim()) { el.props.name = nm.value.trim(); el.name = nm.value.trim(); }
-        el.props.ptype = st.clean ? st.attr : 3;
+        saveNums();
+        el.props.ptype = st.mode === 'clean' ? st.attr : (st.mode === 'agv' ? 4 : 3);
+        if (st.mode === 'agv') {   // AGV 路径：避障属性落库并夹取到合法范围
+          el.props.agvW = Math.min(99.0, Math.max(0.8, st.agvW || 1.0));
+          el.props.agvD = Math.min(3.0, Math.max(0.1, st.agvD || 0.2));
+        }
         markDirty(); renderProps(); renderPalette(); draw(); closeModal();
         toast('示教路径属性已更新：' + PTYPE[el.props.ptype]);
       } },
   ]);
   const mb = $('#modalBody');
   const bind = () => {
-    mb.querySelectorAll('.tpm-card').forEach(c => c.onclick = () => { st.clean = c.dataset.clean === '1'; mb.innerHTML = bodyHtml(); bind(); });
-    mb.querySelectorAll('.tpm-attr').forEach(a => a.onclick = () => { st.attr = parseInt(a.dataset.attr); mb.innerHTML = bodyHtml(); bind(); });
+    mb.querySelectorAll('.tpm-card').forEach(c => c.onclick = () => { saveNums(); st.mode = c.dataset.mode; mb.innerHTML = bodyHtml(); bind(); });
+    mb.querySelectorAll('.tpm-attr[data-attr]').forEach(a => a.onclick = () => { st.attr = parseInt(a.dataset.attr); mb.innerHTML = bodyHtml(); bind(); });
+    mb.querySelectorAll('.tpm-num input[type=number]').forEach(inp => inp.oninput = saveNums);
   };
   bind();
 }
