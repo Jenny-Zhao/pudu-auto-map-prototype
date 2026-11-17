@@ -804,7 +804,6 @@
         <div class="tools-tr">
           <button class="tbtn" id="btnLayers" title="图层（显示控制）">👁</button>
           <button class="tbtn" id="btnLens" title="绘制放大镜（精细绘制时开启局部放大）">⌕</button>
-          <button class="tbtn" id="btnLocate" title="定位到机器人">⌖</button>
           <button class="tbtn" id="btnView" title="全局视角 / 机器人视角">⛶</button>
           <button class="tbtn" id="btnRotate" title="旋转地图">⟳</button>
         </div>
@@ -1864,6 +1863,7 @@ function drawElements() {
     const selected = S.sel.includes(el.id);
     const hovered = S.hover === el.id;
     ctx.save();
+    if (el.off) ctx.globalAlpha = 0.32;   // 软删除（场景不匹配）：置灰渲染，保留在地图中
     if (d.geom === 'area') {
       const pts = polyPts(g);
       ctx.beginPath();
@@ -2725,8 +2725,9 @@ function renderProps() {
       groups[t].forEach(e => {
         const row = document.createElement('div');
         row.className = 'ei';
+        row.style.opacity = e.off ? 0.5 : '';
         row.innerHTML = `<span class="mi-dot" style="background:${d.c}"></span>
-          <span class="nm">${e.props.name || e.name}</span>`;
+          <span class="nm">${e.props.name || e.name}</span>${e.off ? '<span class="ai-st">不可用</span>' : ''}`;
         row.onclick = () => {
           if (e.type === 'PARKING') { enterPkEdit(e.id); return; }   // 点击停车场：进入车道编辑态
           S.sel = [e.id]; renderProps(); draw();
@@ -2750,7 +2751,9 @@ function renderProps() {
   const d = EL[e.type];
   pp.textContent = e.props.name || e.name;
   tag.textContent = d.n;
-  let h = `<div class="pp-sec">元素信息</div>
+  let h = '';
+  if (e.off) h += `<div class="pp-warn" style="background:#fffbe6;border:1px solid #ffe58f;color:#ad6800;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.6;margin-bottom:8px">该元素与当前场景不匹配，已置为<b>不可用</b>（软删除）；切回对应场景后自动恢复。</div>`;
+  h += `<div class="pp-sec">元素信息</div>
     <div class="pr"><span class="k">元素类型</span><span class="v ro">${d.n}</span></div>`;
   h += `<div class="pp-sec">属性</div>`;
   (d.props || []).forEach(p => {
@@ -3860,18 +3863,58 @@ function runSave(hasWarn) {
    15. 推送 / 地图属性 / 场景切换
 ============================================================ */
 function doPush() {
-  openModal('推送至机器端', `
-    <div class="field"><label>目标机器（MAC），支持多个，用换行或逗号分隔</label>
-      <textarea id="pushMac" rows="3" placeholder="如：MT1MAX-2C4D-0087&#10;MT1MAX-2C4D-0088" style="resize:vertical;font-family:inherit">MT1MAX-2C4D-0087</textarea></div>
-  `, [
+  const STORES = [
+    { n:'P4P 智选酒店（春熙路店）', devs:[{mac:'MT1MAX-2C4D-0087', pos:'大堂'},{mac:'MT1MAX-2C4D-0088', pos:'宴会厅'}] },
+    { n:'普渡科技大厦（总部园区）', devs:[{mac:'CC1-3A5B-1121', pos:'1F 前台'},{mac:'CC1-3A5B-1122', pos:'3F 开放区'},{mac:'SH1-9F2E-0455', pos:'负一层员工餐厅'}] },
+    { n:'万象城商业中心', devs:[{mac:'MT1MAX-7B1C-0312', pos:'5F 美食层'},{mac:'BG1-4E8D-2290', pos:'1F 中庭'}] },
+  ];
+  let mode = 'mac', storeIdx = 0, macVal = 'MT1MAX-2C4D-0087';
+  const checked = new Set();   // 门店模式下勾选的设备 MAC
+  const saveMac = () => { const t = $('#pushMac'); if (t) macVal = t.value; };
+  const devListHtml = () => STORES[storeIdx].devs.map(dv => `
+    <label class="ai-item"><input type="checkbox" data-pdev="${dv.mac}" ${checked.has(dv.mac) ? 'checked' : ''}/>
+      <span class="ai-nm" style="font-variant-numeric:tabular-nums">${dv.mac}</span>
+      <span class="ai-pos">${dv.pos}</span></label>`).join('');
+  const bodyHtml = () => `
+    <div class="field"><label>推送方式</label>
+      <div class="segs" style="width:100%">
+        <button data-pw="mac" class="${mode === 'mac' ? 'on' : ''}">MAC 地址</button>
+        <button data-pw="store" class="${mode === 'store' ? 'on' : ''}">门店设备</button>
+      </div></div>
+    ${mode === 'mac'
+      ? `<div class="field"><label>目标机器（MAC），支持多个，用换行或逗号分隔</label>
+        <textarea id="pushMac" rows="3" placeholder="如：MT1MAX-2C4D-0087&#10;MT1MAX-2C4D-0088" style="resize:vertical;font-family:inherit">${macVal}</textarea></div>`
+      : `<div class="field"><label>选择门店</label>
+        <select id="pushStore">${STORES.map((s, i) => `<option value="${i}" ${i === storeIdx ? 'selected' : ''}>${s.n}（${s.devs.length} 台设备）</option>`).join('')}</select></div>
+      <div class="field"><label id="pushDevCnt">勾选设备（已选 ${checked.size} 台）</label>
+        <div style="border:1px solid var(--border-2);border-radius:8px;padding:2px 6px">${devListHtml()}</div></div>`}`;
+  openModal('推送至机器端', bodyHtml(), [
     { t: '取消', fn: closeModal },
     { t: '开始推送', cls: 'primary', fn: () => {
-      const macs = $('#pushMac').value.split(/[\n,，;；\s]+/).map(s => s.trim()).filter(Boolean);
-      if (!macs.length) { toast('请至少输入一个 MAC 地址', true); return; }
-      closeModal();
-      toast('已下发至 ' + macs.length + ' 台机器，机器端将在 3 秒内拉取新地图');
-    } },
+        if (mode === 'mac') {
+          saveMac();
+          const macs = macVal.split(/[\n,，;；\s]+/).map(s => s.trim()).filter(Boolean);
+          if (!macs.length) { toast('请至少输入一个 MAC 地址', true); return; }
+          closeModal();
+          toast('已下发至 ' + macs.length + ' 台机器，机器端将在 3 秒内拉取新地图');
+        } else {
+          if (!checked.size) { toast('请先勾选要推送的设备', true); return; }
+          closeModal();
+          toast('已下发至 ' + STORES[storeIdx].n + ' 的 ' + checked.size + ' 台设备，机器端将在 3 秒内拉取新地图');
+        }
+      } },
   ]);
+  const mb = $('#modalBody');
+  const bind = () => {
+    mb.querySelectorAll('[data-pw]').forEach(b => b.onclick = () => { saveMac(); mode = b.dataset.pw; mb.innerHTML = bodyHtml(); bind(); });
+    const sel = $('#pushStore');
+    if (sel) sel.onchange = () => { storeIdx = +sel.value; mb.innerHTML = bodyHtml(); bind(); };
+    mb.querySelectorAll('[data-pdev]').forEach(cb => cb.onchange = () => {
+      if (cb.checked) checked.add(cb.dataset.pdev); else checked.delete(cb.dataset.pdev);
+      $('#pushDevCnt').textContent = '勾选设备（已选 ' + checked.size + ' 台）';
+    });
+  };
+  bind();
 }
 
 /* 地图列表页：推送至设备（输入 MAC，支持多个） */
@@ -3938,38 +3981,30 @@ function openMapAttr() {
 
 function applyScene(ns) {
   const dropped = elements.filter(e => EL[e.type].only && EL[e.type].only !== ns);
+  const fromParking = S.scene === 'parking' && ns !== 'parking';
   if (!dropped.length) {
+    let restored = 0;
+    elements.forEach(e => { if (e.off && EL[e.type].only === ns) { e.off = false; restored++; } });   // 切回匹配场景：软删除元素自动恢复
     S.scene = ns; setSceneText(ns);
-    renderPalette(); toast('场景已切换为「' + sceneSn(ns) + '」');
+    renderPalette(); renderAll();
+    toast('场景已切换为「' + sceneSn(ns) + '」' + (restored ? '，' + restored + ' 个相关元素已恢复可用' : ''));
     return;
   }
-  // 从停车场场景切换至其他场景：车道、围挡区、减速带等停车场元素将被删除，需二次确认
-  if (S.scene === 'parking' && ns !== 'parking') {
-    openModal('切换场景确认', `
-      <div class="scene-warn">从「地库（室内停车场）」切换至其他场景后，停车场相关元素将被删除，请确认是否继续。</div>
-      <div style="font-size:12.5px;margin-top:10px">以下 ${dropped.length} 个停车场相关元素将被删除：</div>
-      <ul class="warnlist">${dropped.map(e => `<li>${e.props.name || e.name}（${EL[e.type].n}）</li>`).join('')}</ul>
-    `, [
-      { t: '取消', fn: () => { setSceneText(S.scene); closeModal(); } },
-      { t: '确认删除并切换', cls: 'primary', fn: () => {
-        const ids = new Set(dropped.map(e => e.id));
-        elements = elements.filter(e => !ids.has(e.id));
-        S.laneHost = null; S.laneSel = []; S.laneMode = false; S.laneShape = 'rect';   // 车道编辑态一并清理
-        S.scene = ns; setSceneText(ns); closeModal();
-        renderPalette(); renderAll(); toast('已切换场景，' + dropped.length + ' 个停车场元素已删除');
-      } },
-    ]);
-    return;
-  }
+  // 场景不匹配元素统一软删除：保留在地图中并置灰，不物理删除；切回对应场景后自动恢复
+  const warn = fromParking
+    ? '当切换后，将根据场景切换对应匹配地图元素，将导致地库相关元素无法使用，请确认是否修改。'
+    : '当切换后，将根据场景切换对应匹配地图元素，请确认是否修改。';
   openModal('切换场景确认', `
-    <div class="scene-warn">当切换后，将根据场景切换对应地图元素，请确认是否修改。</div>
-    <div style="font-size:12.5px">以下 ${dropped.length} 个元素不属于新场景，将被置为「待处理」并保留在地图中，不会静默删除：</div>
+    <div class="scene-warn">${warn}</div>
+    <div style="font-size:12.5px;margin-top:10px">以下 ${dropped.length} 个相关元素将无法使用（软删除：保留在地图中，切回对应场景后自动恢复）：</div>
     <ul class="warnlist">${dropped.map(e => `<li>${e.props.name || e.name}（${EL[e.type].n}）</li>`).join('')}</ul>
-  `  , [
+  `, [
     { t: '取消', fn: () => { setSceneText(S.scene); closeModal(); } },
     { t: '确认切换', cls: 'primary', fn: () => {
+      dropped.forEach(e => { e.off = true; });   // 软删除：仅标记不可用，不物理删除
+      S.laneHost = null; S.laneSel = []; S.laneMode = false; S.laneShape = 'rect';   // 车道编辑态一并清理
       S.scene = ns; setSceneText(ns); closeModal();
-      renderPalette(); renderAll(); toast('已切换场景，' + dropped.length + ' 个元素置为待处理');
+      renderPalette(); renderAll(); toast('已切换场景，' + dropped.length + ' 个元素已置为不可用（软删除）');
     } },
   ]);
 }
@@ -4001,11 +4036,6 @@ $('#layerClose').onclick = () => {
   $('#layerPanel').classList.remove('on');
   $('#btnLayers').classList.remove('on');
   $('#propPanel').style.display = 'flex';
-};
-$('#btnLocate').onclick = () => {
-  cam.ox = VW / 2 - S.robot.x * cam.s;
-  cam.oy = VH / 2 - S.robot.y * cam.s;
-  draw(); toast('已定位到机器人');
 };
 $('#btnLens').onclick = () => {
   S.lens = !S.lens;
